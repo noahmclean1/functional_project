@@ -2,7 +2,7 @@ module Grid exposing (..)
 
 import Array
 
-type Square = Tile Attr
+type alias Square = (Tile, Attr)
 type Tile = Mine | NoMine Int
 type Attr = Covered | Uncovered | Flagged
 type alias Grid = Array.Array (Array.Array Square)
@@ -13,7 +13,11 @@ resetGrid =
 
 generateBlankGrid : Int -> Grid
 generateBlankGrid size =
-    Debug.todo "TODO"
+    Array.repeat size (generateBlankRow size)
+
+generateBlankRow : Int -> Array.Array Square
+generateBlankRow size =
+    Array.repeat size ((NoMine -1), Covered)
 
 populateMines : Int -> Grid -> Grid
 populateMines numMines blankGrid =

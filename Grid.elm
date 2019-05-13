@@ -8,6 +8,9 @@ import Html.Events exposing (..)
 import Random
 import Time
 
+----------------------------------------------------------------------------------
+-- Type Declarations
+
 type alias Square = (Loc, Tile, Attr)
 
 type Tile
@@ -28,6 +31,20 @@ type alias Loc = (Int, Int)
 
 type alias Grid = Array.Array (Array.Array Square)
 
+type Msg
+    = NewMinePos Int -- Generate a random (valid) index for a mine to be placed in
+    | NewMine Int Int -- Place a mine at the index, continue placing [num] mines
+    | PlaceNumbers -- Finalize the grid by setting each unmined square with an adjacency number
+
+type alias Model =
+    { grid : Grid
+    , status : Status
+    , minePossibilities : List Int
+    }
+
+----------------------------------------------------------------------------------
+-- "Global" variables
+
 main =
     Browser.element
         { init = init
@@ -36,15 +53,12 @@ main =
         , view = view
         }
 
-type alias Model =
-    { grid : Grid
-    , status : Status
-    , minePossibilities : List Int
-    }
-
 initSize = 2
 
 numMines = 2
+
+----------------------------------------------------------------------------------
+-- HTML/front-end functions
 
 -- Create the initial grid, with numMines mines at the specified size
 init : () -> ( Model, Cmd Msg )
@@ -54,10 +68,6 @@ init _ =
         , status = Neither
         , minePossibilities = List.range 0 (initSize ^ 2 - 1)
         }
-
-type Msg
-    = NewMinePos Int
-    | NewMine Int Int
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
@@ -69,7 +79,7 @@ update msg model =
                 (Random.int 0 (List.length model.minePossibilities - 1)))
         NewMine index num ->
             case num of
-                0 -> (model, Cmd.none)
+                0 -> update PlaceNumbers model
                 _ ->
                     let
                         pos = get index model.minePossibilities
@@ -79,6 +89,14 @@ update msg model =
                             , status = Neither
                             , minePossibilities = List.filter (\n -> n /= pos) model.minePossibilities
                             }
+        PlaceNumbers -> 
+            let
+                newGrid = calculateNumbers model.grid
+            in
+                ({grid = newGrid
+                , status = Neither
+                , minePossibilities = []}, Cmd.none)                
+                    
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
@@ -89,10 +107,13 @@ view : Model -> Html Msg
 view model =
     div [] [ Html.text (Debug.toString model.grid) ]
 
--- Return grid to the initial value
-resetGrid : Grid
-resetGrid =
+-- TODO transforms a grid into a proper Html output (div of divs)
+gridToView : Grid -> Html Msg
+gridToView grid =
     Debug.todo "TODO"
+
+----------------------------------------------------------------------------------
+-- Back-end functions
 
 -- 1st step of grid generation: a grid with 0 mines
 generateBlankGrid : Int -> Grid
@@ -111,9 +132,10 @@ intToLoc n size =
         row = floor (toFloat m / toFloat size)
         col = m - (row * size)
     in
-        if n > total 
-        then Debug.todo "intToLoc: n out of range"
-        else (row, col)
+        if n > total then 
+            Debug.todo "intToLoc: n out of range"
+        else
+            (row, col)
 
 get : Int -> List a -> a
 get n l =
@@ -127,7 +149,7 @@ extractMaybe n maybe =
         Just x -> x
         Nothing -> Debug.todo ("extractMaybe: bad case at " ++ Debug.toString n)
 
--- Main function for the 2nd step of initialization: place one mine at a given location
+-- 2nd step of initialization (called repeatedly in update): Adds a single mine at a given location
 addMine : Int -> Grid -> Grid
 addMine n g =
     let
@@ -145,4 +167,38 @@ addMine n g =
 -- 3rd and final step of initialization: populate a mined grid with adjacency numbers
 calculateNumbers : Grid -> Grid
 calculateNumbers minedGrid =
-    Debug.todo "TODO"
+    Array.map (\grid -> calculateRowNum minedGrid grid) minedGrid
+
+calculateRowNum : Grid -> Array.Array Square -> Array.Array Square
+calculateRowNum minedGrid row =
+    Array.map (\square -> calculateOneNumber minedGrid square) row
+
+calculateOneNumber : Grid -> Square -> Square
+calculateOneNumber grid square =
+    case square of
+        (_, Mine, _) -> square
+        ((y,x), NoMine _, attr) ->
+            let
+                -- A bit messy but still constant number of calls per square (8)
+                sum =
+                    checkMine (x-1) (y-1) grid
+                    + checkMine x (y-1) grid
+                    + checkMine (x+1) (y-1) grid
+                    + checkMine (x-1) y grid
+                    + checkMine (x+1) y grid
+                    + checkMine (x-1) (y+1) grid
+                    + checkMine x (y+1) grid
+                    + checkMine (x+1) (y+1) grid
+            in
+                ((y,x), NoMine sum, attr)
+
+-- Gives a 1 if there's a mine at the location, 0 if out of bounds or no mine, don't forget the rows/cols are 1-indexed!
+checkMine : Int -> Int -> Grid -> Int
+checkMine x y grid =
+    case (Array.get (y-1) grid) of
+        Nothing -> 0
+        Just row ->
+            case (Array.get (x-1) row) of
+                Nothing -> 0
+                Just (_, Mine, _) -> 1
+                _ -> 0

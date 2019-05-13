@@ -19,6 +19,11 @@ type Attr
     | Uncovered
     | Flagged
 
+type Status
+    = Won
+    | Lost
+    | Neither
+
 type alias Loc = (Int, Int)
 
 type alias Grid = Array.Array (Array.Array Square)
@@ -33,8 +38,7 @@ main =
 
 type alias Model =
     { grid : Grid
-    , won : Bool
-    , lost : Bool
+    , status : Status
     , minePossibilities : List Int
     }
 
@@ -42,12 +46,12 @@ initSize = 2
 
 numMines = 2
 
+-- Create the initial grid, with numMines mines at the specified size
 init : () -> ( Model, Cmd Msg )
 init _ =
     update (NewMinePos numMines)
         { grid = generateBlankGrid initSize
-        , won = False
-        , lost = False
+        , status = Neither
         , minePossibilities = List.range 0 (initSize ^ 2 - 1)
         }
 
@@ -72,8 +76,7 @@ update msg model =
                     in
                         update (NewMinePos (num - 1))
                             { grid = addMine (pos + 1) model.grid
-                            , won = False
-                            , lost = False
+                            , status = Neither
                             , minePossibilities = List.filter (\n -> n /= pos) model.minePossibilities
                             }
 
@@ -81,14 +84,17 @@ subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.none
 
+-- TODO this will draw the grid as a series of divs!
 view : Model -> Html Msg
 view model =
     div [] [ Html.text (Debug.toString model.grid) ]
 
+-- Return grid to the initial value
 resetGrid : Grid
 resetGrid =
     Debug.todo "TODO"
 
+-- 1st step of grid generation: a grid with 0 mines
 generateBlankGrid : Int -> Grid
 generateBlankGrid size =
     Array.initialize size (\n -> generateBlankRow (n + 1) size)
@@ -121,6 +127,7 @@ extractMaybe n maybe =
         Just x -> x
         Nothing -> Debug.todo ("extractMaybe: bad case at " ++ Debug.toString n)
 
+-- Main function for the 2nd step of initialization: place one mine at a given location
 addMine : Int -> Grid -> Grid
 addMine n g =
     let
@@ -131,10 +138,11 @@ addMine n g =
         square = extractMaybe n (Array.get colNum row)
         loc =
             case square of
-                (loc, tile, attr) -> loc
+                (location, tile, attr) -> location
     in
         Array.set rowNum (Array.set colNum ( loc, Mine, Covered ) row) g
 
+-- 3rd and final step of initialization: populate a mined grid with adjacency numbers
 calculateNumbers : Grid -> Grid
 calculateNumbers minedGrid =
     Debug.todo "TODO"

@@ -5,6 +5,7 @@ import Browser
 import Debug
 import Html exposing (..)
 import Html.Events exposing (..)
+import Html.Attributes exposing (..)
 import Random
 import Time
 
@@ -53,7 +54,7 @@ main =
         , view = view
         }
 
-initSize = 2
+initSize = 24
 
 numMines = 2
 
@@ -105,12 +106,69 @@ subscriptions model =
 -- TODO this will draw the grid as a series of divs!
 view : Model -> Html Msg
 view model =
-    div [] [ Html.text (Debug.toString model.grid) ]
+    gridToView model.grid 500
 
 -- TODO transforms a grid into a proper Html output (div of divs)
-gridToView : Grid -> Html Msg
-gridToView grid =
-    Debug.todo "TODO"
+gridToView : Grid -> Int -> Html Msg
+gridToView grid size =
+    div
+    [
+    style "height" ((Debug.toString size) ++ "px"),
+    style "width" ((Debug.toString size) ++ "px")
+    ]
+    ((Array.map (rowToView size) grid) |> Array.toList)
+
+rowToView : Int -> Array.Array Square -> Html Msg
+rowToView size arr =
+    let
+        len = Array.length arr
+        sqSize = round (toFloat size / toFloat len)
+    in
+        div
+        [
+        style "height" ((Debug.toString sqSize) ++ "px"),
+        style "width" ((Debug.toString size) ++ "px")
+        ]
+        ((Array.map (squareToView sqSize) arr) |> Array.toList)
+
+squareToView : Int -> Square -> Html Msg
+squareToView size ((x,y), tile, attr) =
+    let
+         styles =
+            [
+            style "height" "0",
+            style "width" "0",
+            style "padding-bottom" ((Debug.toString size) ++ "px"),
+            style "padding-right" ((Debug.toString size) ++ "px"),
+            style "border" "1px solid black",
+            style "display" "inline",
+            style "left" ((Debug.toString ((y-1) * size + 7)) ++ "px"),
+            style "position" "absolute"
+            ]
+    in 
+    case attr of
+        Covered ->
+            div
+                (styles ++ [style "background-color" "blue"])
+                []
+        Flagged ->
+            div
+                styles
+                [img 
+                    (styles ++ [style "src" "images/flag.png"])
+                    []
+                ]
+        Uncovered ->
+            div
+                styles
+                (case tile of
+                    Mine -> 
+                        [img 
+                            (styles ++ [style "src" "images/mine.png"])
+                            []
+                        ]
+                    NoMine i ->
+                        [text (Debug.toString i)])
 
 ----------------------------------------------------------------------------------
 -- Back-end functions

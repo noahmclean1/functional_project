@@ -36,6 +36,7 @@ type Msg
     = NewMinePos Int -- Generate a random (valid) index for a mine to be placed in
     | NewMine Int Int -- Place a mine at the index, continue placing [num] mines
     | PlaceNumbers -- Finalize the grid by setting each unmined square with an adjacency number
+    | Uncover Loc -- Uncover the clicked square
 
 type alias Model =
     { grid : Grid
@@ -56,7 +57,7 @@ main =
 
 initSize = 24
 
-numMines = 2
+numMines = 50
 
 ----------------------------------------------------------------------------------
 -- HTML/front-end functions
@@ -96,25 +97,36 @@ update msg model =
             in
                 ({grid = newGrid
                 , status = Neither
-                , minePossibilities = []}, Cmd.none)                
+                , minePossibilities = []}, Cmd.none)
+        Uncover (row, col) ->
+            let
+                newGrid = 
+                    let
+                        arr = extractMaybe (Array.get (row-1) model.grid)
+                        (loc, tile, _) = extractMaybe (Array.get (col-1) arr)
+                    in
+                        Array.set (row-1) (Array.set (col-1) (loc, tile, Uncovered) arr) model.grid
+            in
+                ({grid = newGrid
+                , status = Neither
+                , minePossibilities = []}, Cmd.none)             
                     
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.none
 
--- TODO this will draw the grid as a series of divs!
 view : Model -> Html Msg
 view model =
     gridToView model.grid 500
 
--- TODO transforms a grid into a proper Html output (div of divs)
 gridToView : Grid -> Int -> Html Msg
 gridToView grid size =
     div
     [
     style "height" ((Debug.toString size) ++ "px"),
-    style "width" ((Debug.toString size) ++ "px")
+    style "width" ((Debug.toString size) ++ "px"),
+    style "font-size" ((Debug.toString (round (0.8 * toFloat size / toFloat (Array.length grid)))) ++ "px")
     ]
     ((Array.map (rowToView size) grid) |> Array.toList)
 
@@ -132,7 +144,7 @@ rowToView size arr =
         ((Array.map (squareToView sqSize) arr) |> Array.toList)
 
 squareToView : Int -> Square -> Html Msg
-squareToView size ((x,y), tile, attr) =
+squareToView size ((row,col), tile, attr) =
     let
          styles =
             [
@@ -141,15 +153,20 @@ squareToView size ((x,y), tile, attr) =
             style "padding-bottom" ((Debug.toString size) ++ "px"),
             style "padding-right" ((Debug.toString size) ++ "px"),
             style "border" "1px solid black",
-            style "display" "inline",
-            style "left" ((Debug.toString ((y-1) * size + 7)) ++ "px"),
-            style "position" "absolute"
+            style "display" "inline-block",
+            style "left" ((Debug.toString ((col-1) * size + 7)) ++ "px"),
+            style "position" "absolute",
+            style "text-align" "center"
             ]
     in 
     case attr of
         Covered ->
             div
-                (styles ++ [style "background-color" "blue"])
+                (styles ++ 
+                    [
+                    style "background-color" "blue",
+                    onClick (Uncover (row,col))
+                    ])
                 []
         Flagged ->
             div
@@ -168,7 +185,16 @@ squareToView size ((x,y), tile, attr) =
                             []
                         ]
                     NoMine i ->
-                        [text (Debug.toString i)])
+                        case i of
+                            0 -> []
+                            _ ->
+                                [div 
+                                    [
+                                    style "left" "30%", 
+                                    style "top" "10%",
+                                    style "position" "absolute"
+                                    ] 
+                                    [text (Debug.toString i)]])
 
 ----------------------------------------------------------------------------------
 -- Back-end functions
@@ -201,11 +227,11 @@ get n l =
         head::_ -> head
         _ -> Debug.todo "get: bad case"
 
-extractMaybe : Int -> Maybe a -> a
-extractMaybe n maybe =
+extractMaybe : Maybe a -> a
+extractMaybe maybe =
     case maybe of
         Just x -> x
-        Nothing -> Debug.todo ("extractMaybe: bad case at " ++ Debug.toString n)
+        Nothing -> Debug.todo "extractMaybe: bad case"
 
 -- 2nd step of initialization (called repeatedly in update): Adds a single mine at a given location
 addMine : Int -> Grid -> Grid
@@ -214,8 +240,8 @@ addMine n g =
         pos = intToLoc n initSize
         rowNum = Tuple.first pos
         colNum = Tuple.second pos
-        row = extractMaybe n (Array.get rowNum g)
-        square = extractMaybe n (Array.get colNum row)
+        row = extractMaybe (Array.get rowNum g)
+        square = extractMaybe (Array.get colNum row)
         loc =
             case square of
                 (location, tile, attr) -> location

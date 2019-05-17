@@ -5087,6 +5087,27 @@ var author$project$Grid$get = F2(
 		}
 	});
 var author$project$Grid$Uncovered = {$: 'Uncovered'};
+var author$project$Grid$uncoverAllHelper = function (square) {
+	if ((square.b.$ === 'NoMine') && (square.c.$ === 'Covered')) {
+		var loc = square.a;
+		var num = square.b.a;
+		var _n1 = square.c;
+		return _Utils_Tuple3(
+			loc,
+			author$project$Grid$NoMine(num),
+			author$project$Grid$Uncovered);
+	} else {
+		return square;
+	}
+};
+var author$project$Grid$uncoverAllGrid = function (grid) {
+	return A2(
+		elm$core$Array$map,
+		function (row) {
+			return A2(elm$core$Array$map, author$project$Grid$uncoverAllHelper, row);
+		},
+		grid);
+};
 var elm$core$Basics$neq = _Utils_notEqual;
 var author$project$Grid$uncoverGrid = F3(
 	function (x, y, grid) {
@@ -5099,65 +5120,77 @@ var author$project$Grid$uncoverGrid = F3(
 			if (_n1.$ === 'Nothing') {
 				return grid;
 			} else {
-				if (_n1.a.c.$ === 'Uncovered') {
-					var _n2 = _n1.a;
-					var _n3 = _n2.c;
-					return grid;
-				} else {
-					if (_n1.a.b.$ === 'NoMine') {
+				switch (_n1.a.c.$) {
+					case 'Uncovered':
+						var _n2 = _n1.a;
+						var _n3 = _n2.c;
+						return grid;
+					case 'Flagged':
 						var _n4 = _n1.a;
-						var loc = _n4.a;
-						var number = _n4.b.a;
-						var attr = _n4.c;
-						var newGrid = A3(
-							elm$core$Array$set,
-							y - 1,
-							A3(
+						var _n5 = _n4.c;
+						return grid;
+					default:
+						if (_n1.a.b.$ === 'NoMine') {
+							var _n6 = _n1.a;
+							var loc = _n6.a;
+							var number = _n6.b.a;
+							var attr = _n6.c;
+							var newGrid = A3(
 								elm$core$Array$set,
-								x - 1,
-								_Utils_Tuple3(
-									loc,
-									author$project$Grid$NoMine(number),
-									author$project$Grid$Uncovered),
-								row),
-							grid);
-						return number ? newGrid : A3(
-							author$project$Grid$uncoverGrid,
-							x + 1,
-							y + 1,
-							A3(
+								y - 1,
+								A3(
+									elm$core$Array$set,
+									x - 1,
+									_Utils_Tuple3(
+										loc,
+										author$project$Grid$NoMine(number),
+										author$project$Grid$Uncovered),
+									row),
+								grid);
+							return number ? newGrid : A3(
 								author$project$Grid$uncoverGrid,
-								x,
+								x + 1,
 								y + 1,
 								A3(
 									author$project$Grid$uncoverGrid,
-									x - 1,
+									x,
 									y + 1,
 									A3(
 										author$project$Grid$uncoverGrid,
-										x + 1,
-										y,
+										x - 1,
+										y + 1,
 										A3(
 											author$project$Grid$uncoverGrid,
-											x - 1,
+											x + 1,
 											y,
 											A3(
 												author$project$Grid$uncoverGrid,
-												x + 1,
-												y - 1,
+												x - 1,
+												y,
 												A3(
 													author$project$Grid$uncoverGrid,
-													x,
+													x + 1,
 													y - 1,
-													A3(author$project$Grid$uncoverGrid, x - 1, y - 1, newGrid))))))));
-					} else {
-						return _Debug_todo(
-							'Grid',
-							{
-								start: {line: 310, column: 22},
-								end: {line: 310, column: 32}
-							})('Error in uncoverGrid: recursed onto a mine');
-					}
+													A3(
+														author$project$Grid$uncoverGrid,
+														x,
+														y - 1,
+														A3(author$project$Grid$uncoverGrid, x - 1, y - 1, newGrid))))))));
+						} else {
+							var _n7 = _n1.a;
+							var loc = _n7.a;
+							var newGrid = A3(
+								elm$core$Array$set,
+								y - 1,
+								A3(
+									elm$core$Array$set,
+									x - 1,
+									_Utils_Tuple3(loc, author$project$Grid$Mine, author$project$Grid$Uncovered),
+									row),
+								grid);
+							var wholeGrid = author$project$Grid$uncoverAllGrid(newGrid);
+							return wholeGrid;
+						}
 				}
 			}
 		}

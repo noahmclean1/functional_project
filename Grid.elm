@@ -292,13 +292,14 @@ uncoverGrid x y grid =
             case (Array.get (x-1) row) of
                 Nothing -> grid
                 Just (_, _, Uncovered) -> grid
+                Just (_, _, Flagged) ->  grid -- Clicking a flag should do nothing
                 Just (loc, NoMine number, attr) ->
                     let
                         newGrid = Array.set (y-1) (Array.set (x-1) (loc, NoMine number, Uncovered) row) grid
                     in
                         if number /= 0 then
                             newGrid
-                        else
+                        else -- A bit messy, but this works!
                             uncoverGrid (x-1) (y-1) newGrid 
                                 |> uncoverGrid x (y-1) 
                                 |> uncoverGrid (x+1) (y-1) 
@@ -307,6 +308,19 @@ uncoverGrid x y grid =
                                 |> uncoverGrid (x-1) (y+1) 
                                 |> uncoverGrid x (y+1) 
                                 |> uncoverGrid (x+1) (y+1)
-                _ -> Debug.todo "Error in uncoverGrid: recursed onto a mine TODO FIX"
+                Just (loc, _, _) ->
+                    let
+                        newGrid = Array.set (y-1) (Array.set (x-1) (loc, Mine, Uncovered) row) grid
+                        wholeGrid = uncoverAllGrid newGrid
+                    in
+                        wholeGrid -- How can we show that this is a loss?                          
 
-            
+uncoverAllGrid : Grid -> Grid
+uncoverAllGrid grid =
+    Array.map (\row -> Array.map uncoverAllHelper row) grid
+
+uncoverAllHelper : Square -> Square
+uncoverAllHelper square = 
+    case square of
+        (loc, NoMine num, Covered) -> (loc, NoMine num, Uncovered)
+        _ -> square -- Don't uncover any mines or flags, ignored already uncovered squares

@@ -4686,32 +4686,28 @@ var author$project$Grid$generateBlankGrid = function (size) {
 			return A2(author$project$Grid$generateBlankRow, n + 1, size);
 		});
 };
-var author$project$Grid$initSize = 2;
-var author$project$Grid$numMines = 2;
+var author$project$Grid$initSize = 24;
+var author$project$Grid$numMines = 50;
 var author$project$Grid$NewMine = F2(
 	function (a, b) {
 		return {$: 'NewMine', a: a, b: b};
 	});
 var author$project$Grid$PlaceNumbers = {$: 'PlaceNumbers'};
 var author$project$Grid$Mine = {$: 'Mine'};
-var elm$core$Basics$append = _Utils_append;
-var elm$core$Debug$toString = _Debug_toString;
 var elm$core$Debug$todo = _Debug_todo;
-var author$project$Grid$extractMaybe = F2(
-	function (n, maybe) {
-		if (maybe.$ === 'Just') {
-			var x = maybe.a;
-			return x;
-		} else {
-			return _Debug_todo(
-				'Grid',
-				{
-					start: {line: 144, column: 20},
-					end: {line: 144, column: 30}
-				})(
-				'extractMaybe: bad case at ' + elm$core$Debug$toString(n));
-		}
-	});
+var author$project$Grid$extractMaybe = function (maybe) {
+	if (maybe.$ === 'Just') {
+		var x = maybe.a;
+		return x;
+	} else {
+		return _Debug_todo(
+			'Grid',
+			{
+				start: {line: 230, column: 20},
+				end: {line: 230, column: 30}
+			})('extractMaybe: bad case');
+	}
+};
 var elm$core$Basics$pow = _Basics_pow;
 var author$project$Grid$intToLoc = F2(
 	function (n, size) {
@@ -4722,8 +4718,8 @@ var author$project$Grid$intToLoc = F2(
 		return (_Utils_cmp(n, total) > 0) ? _Debug_todo(
 			'Grid',
 			{
-				start: {line: 130, column: 13},
-				end: {line: 130, column: 23}
+				start: {line: 216, column: 13},
+				end: {line: 216, column: 23}
 			})('intToLoc: n out of range') : _Utils_Tuple2(row, col);
 	});
 var elm$core$Bitwise$shiftRightZfBy = _Bitwise_shiftRightZfBy;
@@ -4824,14 +4820,10 @@ var author$project$Grid$addMine = F2(
 	function (n, g) {
 		var pos = A2(author$project$Grid$intToLoc, n, author$project$Grid$initSize);
 		var rowNum = pos.a;
-		var row = A2(
-			author$project$Grid$extractMaybe,
-			n,
+		var row = author$project$Grid$extractMaybe(
 			A2(elm$core$Array$get, rowNum, g));
 		var colNum = pos.b;
-		var square = A2(
-			author$project$Grid$extractMaybe,
-			n,
+		var square = author$project$Grid$extractMaybe(
 			A2(elm$core$Array$get, colNum, row));
 		var loc = function () {
 			var location = square.a;
@@ -5089,12 +5081,87 @@ var author$project$Grid$get = F2(
 			return _Debug_todo(
 				'Grid',
 				{
-					start: {line: 138, column: 14},
-					end: {line: 138, column: 24}
+					start: {line: 224, column: 14},
+					end: {line: 224, column: 24}
 				})('get: bad case');
 		}
 	});
+var author$project$Grid$Uncovered = {$: 'Uncovered'};
 var elm$core$Basics$neq = _Utils_notEqual;
+var author$project$Grid$uncoverGrid = F3(
+	function (x, y, grid) {
+		var _n0 = A2(elm$core$Array$get, y - 1, grid);
+		if (_n0.$ === 'Nothing') {
+			return grid;
+		} else {
+			var row = _n0.a;
+			var _n1 = A2(elm$core$Array$get, x - 1, row);
+			if (_n1.$ === 'Nothing') {
+				return grid;
+			} else {
+				if (_n1.a.c.$ === 'Uncovered') {
+					var _n2 = _n1.a;
+					var _n3 = _n2.c;
+					return grid;
+				} else {
+					if (_n1.a.b.$ === 'NoMine') {
+						var _n4 = _n1.a;
+						var loc = _n4.a;
+						var number = _n4.b.a;
+						var attr = _n4.c;
+						var newGrid = A3(
+							elm$core$Array$set,
+							y - 1,
+							A3(
+								elm$core$Array$set,
+								x - 1,
+								_Utils_Tuple3(
+									loc,
+									author$project$Grid$NoMine(number),
+									author$project$Grid$Uncovered),
+								row),
+							grid);
+						return number ? newGrid : A3(
+							author$project$Grid$uncoverGrid,
+							x + 1,
+							y + 1,
+							A3(
+								author$project$Grid$uncoverGrid,
+								x,
+								y + 1,
+								A3(
+									author$project$Grid$uncoverGrid,
+									x - 1,
+									y + 1,
+									A3(
+										author$project$Grid$uncoverGrid,
+										x + 1,
+										y,
+										A3(
+											author$project$Grid$uncoverGrid,
+											x - 1,
+											y,
+											A3(
+												author$project$Grid$uncoverGrid,
+												x + 1,
+												y - 1,
+												A3(
+													author$project$Grid$uncoverGrid,
+													x,
+													y - 1,
+													A3(author$project$Grid$uncoverGrid, x - 1, y - 1, newGrid))))))));
+					} else {
+						return _Debug_todo(
+							'Grid',
+							{
+								start: {line: 310, column: 22},
+								end: {line: 310, column: 32}
+							})('Error in uncoverGrid: recursed onto a mine');
+					}
+				}
+			}
+		}
+	});
 var elm$core$List$foldrHelper = F4(
 	function (fn, acc, ctr, ls) {
 		if (!ls.b) {
@@ -5201,6 +5268,7 @@ var elm$json$Json$Decode$OneOf = function (a) {
 	return {$: 'OneOf', a: a};
 };
 var elm$core$Basics$and = _Basics_and;
+var elm$core$Basics$append = _Utils_append;
 var elm$core$Char$toCode = _Char_toCode;
 var elm$core$Char$isLower = function (_char) {
 	var code = elm$core$Char$toCode(_char);
@@ -5574,8 +5642,16 @@ var author$project$Grid$update = F2(
 						model = $temp$model;
 						continue update;
 					}
-				default:
+				case 'PlaceNumbers':
 					var newGrid = author$project$Grid$calculateNumbers(model.grid);
+					return _Utils_Tuple2(
+						{grid: newGrid, minePossibilities: _List_Nil, status: author$project$Grid$Neither},
+						elm$core$Platform$Cmd$none);
+				default:
+					var _n2 = msg.a;
+					var row = _n2.a;
+					var col = _n2.b;
+					var newGrid = A3(author$project$Grid$uncoverGrid, col, row, model.grid);
 					return _Utils_Tuple2(
 						{grid: newGrid, minePossibilities: _List_Nil, status: author$project$Grid$Neither},
 						elm$core$Platform$Cmd$none);
@@ -5600,6 +5676,10 @@ var elm$core$Platform$Sub$none = elm$core$Platform$Sub$batch(_List_Nil);
 var author$project$Grid$subscriptions = function (model) {
 	return elm$core$Platform$Sub$none;
 };
+var author$project$Grid$Uncover = function (a) {
+	return {$: 'Uncover', a: a};
+};
+var elm$core$Debug$toString = _Debug_toString;
 var elm$json$Json$Decode$map = _Json_map1;
 var elm$json$Json$Decode$map2 = _Json_map2;
 var elm$json$Json$Decode$succeed = _Json_succeed;
@@ -5616,17 +5696,188 @@ var elm$virtual_dom$VirtualDom$toHandlerInt = function (handler) {
 	}
 };
 var elm$html$Html$div = _VirtualDom_node('div');
+var elm$html$Html$img = _VirtualDom_node('img');
 var elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
 var elm$html$Html$text = elm$virtual_dom$VirtualDom$text;
-var author$project$Grid$view = function (model) {
+var elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
+var elm$html$Html$Attributes$style = elm$virtual_dom$VirtualDom$style;
+var elm$virtual_dom$VirtualDom$Normal = function (a) {
+	return {$: 'Normal', a: a};
+};
+var elm$virtual_dom$VirtualDom$on = _VirtualDom_on;
+var elm$html$Html$Events$on = F2(
+	function (event, decoder) {
+		return A2(
+			elm$virtual_dom$VirtualDom$on,
+			event,
+			elm$virtual_dom$VirtualDom$Normal(decoder));
+	});
+var elm$html$Html$Events$onClick = function (msg) {
 	return A2(
-		elm$html$Html$div,
-		_List_Nil,
-		_List_fromArray(
+		elm$html$Html$Events$on,
+		'click',
+		elm$json$Json$Decode$succeed(msg));
+};
+var author$project$Grid$squareToView = F2(
+	function (size, _n0) {
+		var _n1 = _n0.a;
+		var row = _n1.a;
+		var col = _n1.b;
+		var tile = _n0.b;
+		var attr = _n0.c;
+		var styles = _List_fromArray(
 			[
-				elm$html$Html$text(
-				elm$core$Debug$toString(model.grid))
-			]));
+				A2(elm$html$Html$Attributes$style, 'height', '0'),
+				A2(elm$html$Html$Attributes$style, 'width', '0'),
+				A2(
+				elm$html$Html$Attributes$style,
+				'padding-bottom',
+				elm$core$Debug$toString(size) + 'px'),
+				A2(
+				elm$html$Html$Attributes$style,
+				'padding-right',
+				elm$core$Debug$toString(size) + 'px'),
+				A2(elm$html$Html$Attributes$style, 'border', '1px solid black'),
+				A2(elm$html$Html$Attributes$style, 'display', 'inline-block'),
+				A2(
+				elm$html$Html$Attributes$style,
+				'left',
+				elm$core$Debug$toString(((col - 1) * size) + 7) + 'px'),
+				A2(elm$html$Html$Attributes$style, 'position', 'absolute'),
+				A2(elm$html$Html$Attributes$style, 'text-align', 'center')
+			]);
+		switch (attr.$) {
+			case 'Covered':
+				return A2(
+					elm$html$Html$div,
+					_Utils_ap(
+						styles,
+						_List_fromArray(
+							[
+								A2(elm$html$Html$Attributes$style, 'background-color', 'blue'),
+								elm$html$Html$Events$onClick(
+								author$project$Grid$Uncover(
+									_Utils_Tuple2(row, col)))
+							])),
+					_List_Nil);
+			case 'Flagged':
+				return A2(
+					elm$html$Html$div,
+					styles,
+					_List_fromArray(
+						[
+							A2(
+							elm$html$Html$img,
+							_Utils_ap(
+								styles,
+								_List_fromArray(
+									[
+										A2(elm$html$Html$Attributes$style, 'src', 'images/flag.png')
+									])),
+							_List_Nil)
+						]));
+			default:
+				return A2(
+					elm$html$Html$div,
+					styles,
+					function () {
+						if (tile.$ === 'Mine') {
+							return _List_fromArray(
+								[
+									A2(
+									elm$html$Html$img,
+									_Utils_ap(
+										styles,
+										_List_fromArray(
+											[
+												A2(elm$html$Html$Attributes$style, 'src', 'images/mine.png'),
+												A2(elm$html$Html$Attributes$style, 'background-color', 'red')
+											])),
+									_List_Nil)
+								]);
+						} else {
+							var i = tile.a;
+							if (!i) {
+								return _List_Nil;
+							} else {
+								return _List_fromArray(
+									[
+										A2(
+										elm$html$Html$div,
+										_List_fromArray(
+											[
+												A2(elm$html$Html$Attributes$style, 'left', '30%'),
+												A2(elm$html$Html$Attributes$style, 'top', '10%'),
+												A2(elm$html$Html$Attributes$style, 'position', 'absolute')
+											]),
+										_List_fromArray(
+											[
+												elm$html$Html$text(
+												elm$core$Debug$toString(i))
+											]))
+									]);
+							}
+						}
+					}());
+		}
+	});
+var elm$core$Array$length = function (_n0) {
+	var len = _n0.a;
+	return len;
+};
+var elm$core$Basics$round = _Basics_round;
+var author$project$Grid$rowToView = F2(
+	function (size, arr) {
+		var len = elm$core$Array$length(arr);
+		var sqSize = elm$core$Basics$round(size / len);
+		return A2(
+			elm$html$Html$div,
+			_List_fromArray(
+				[
+					A2(
+					elm$html$Html$Attributes$style,
+					'height',
+					elm$core$Debug$toString(sqSize) + 'px'),
+					A2(
+					elm$html$Html$Attributes$style,
+					'width',
+					elm$core$Debug$toString(size) + 'px')
+				]),
+			elm$core$Array$toList(
+				A2(
+					elm$core$Array$map,
+					author$project$Grid$squareToView(sqSize),
+					arr)));
+	});
+var author$project$Grid$gridToView = F2(
+	function (grid, size) {
+		return A2(
+			elm$html$Html$div,
+			_List_fromArray(
+				[
+					A2(
+					elm$html$Html$Attributes$style,
+					'height',
+					elm$core$Debug$toString(size) + 'px'),
+					A2(
+					elm$html$Html$Attributes$style,
+					'width',
+					elm$core$Debug$toString(size) + 'px'),
+					A2(
+					elm$html$Html$Attributes$style,
+					'font-size',
+					elm$core$Debug$toString(
+						elm$core$Basics$round(
+							(0.8 * size) / elm$core$Array$length(grid))) + 'px')
+				]),
+			elm$core$Array$toList(
+				A2(
+					elm$core$Array$map,
+					author$project$Grid$rowToView(size),
+					grid)));
+	});
+var author$project$Grid$view = function (model) {
+	return A2(author$project$Grid$gridToView, model.grid, 500);
 };
 var elm$browser$Browser$External = function (a) {
 	return {$: 'External', a: a};

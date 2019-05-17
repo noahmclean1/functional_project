@@ -3,6 +3,7 @@ module Grid exposing (..)
 import Array
 import Browser
 import Debug
+import List
 import Html exposing (..)
 import Html.Events exposing (..)
 import Html.Attributes exposing (..)
@@ -100,12 +101,7 @@ update msg model =
                 , minePossibilities = []}, Cmd.none)
         Uncover (row, col) ->
             let
-                newGrid = 
-                    let
-                        arr = extractMaybe (Array.get (row-1) model.grid)
-                        (loc, tile, _) = extractMaybe (Array.get (col-1) arr)
-                    in
-                        Array.set (row-1) (Array.set (col-1) (loc, tile, Uncovered) arr) model.grid
+                newGrid = uncoverGrid col row model.grid
             in
                 ({grid = newGrid
                 , status = Neither
@@ -181,7 +177,7 @@ squareToView size ((row,col), tile, attr) =
                 (case tile of
                     Mine -> 
                         [img 
-                            (styles ++ [style "src" "images/mine.png"])
+                            (styles ++ [style "src" "images/mine.png", style "background-color" "red"])
                             []
                         ]
                     NoMine i ->
@@ -286,3 +282,31 @@ checkMine x y grid =
                 Nothing -> 0
                 Just (_, Mine, _) -> 1
                 _ -> 0
+
+-- Recursive uncovering function that makes minesweeper actually play well
+uncoverGrid : Int -> Int -> Grid -> Grid
+uncoverGrid x y grid =
+    case (Array.get (y-1) grid) of
+        Nothing -> grid
+        Just row -> 
+            case (Array.get (x-1) row) of
+                Nothing -> grid
+                Just (_, _, Uncovered) -> grid
+                Just (loc, NoMine number, attr) ->
+                    let
+                        newGrid = Array.set (y-1) (Array.set (x-1) (loc, NoMine number, Uncovered) row) grid
+                    in
+                        if number /= 0 then
+                            newGrid
+                        else
+                            uncoverGrid (x-1) (y-1) newGrid 
+                                |> uncoverGrid x (y-1) 
+                                |> uncoverGrid (x+1) (y-1) 
+                                |> uncoverGrid (x-1) y 
+                                |> uncoverGrid (x+1) y 
+                                |> uncoverGrid (x-1) (y+1) 
+                                |> uncoverGrid x (y+1) 
+                                |> uncoverGrid (x+1) (y+1)
+                _ -> Debug.todo "Error in uncoverGrid: recursed onto a mine TODO FIX"
+
+            

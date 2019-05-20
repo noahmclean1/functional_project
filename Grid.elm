@@ -4,6 +4,7 @@ import Array
 import Browser
 import Debug
 import List
+import Json.Decode as Json
 import Html exposing (..)
 import Html.Events exposing (..)
 import Html.Attributes exposing (..)
@@ -38,6 +39,7 @@ type Msg
     | NewMine Int Int -- Place a mine at the index, continue placing [num] mines
     | PlaceNumbers -- Finalize the grid by setting each unmined square with an adjacency number
     | Uncover Loc -- Uncover the clicked square
+    | Flag Loc -- Flag the clicked square as a mine
 
 type alias Model =
     { grid : Grid
@@ -103,11 +105,23 @@ update msg model =
             if model.status == Neither 
             then
                 let
+                    -- TODO implement number clicking
                     (newGrid, newStatus) = uncoverGrid col row (model.grid, model.status)
                 in
                     ({grid = newGrid
                     , status = newStatus
                     , minePossibilities = []}, Cmd.none)
+            else
+                (model, Cmd.none)
+        Flag (row,col) ->
+            if model.status == Neither
+            then
+                let
+                    newGrid = flagInGrid col row model.grid
+                in
+                    ({grid= newGrid
+                    , status = Neither
+                    , minePossibilities = []}, Cmd.none)                        
             else
                 (model, Cmd.none)
                     
@@ -165,16 +179,18 @@ squareToView size ((row,col), tile, attr) =
                 (styles ++ 
                     [
                     style "background-color" "blue",
-                    onClick (Uncover (row,col))
+                    onClick (Uncover (row,col)),
+                    onRightClick (Flag (row,col))
                     ])
                 []
         Flagged ->
             div
-                styles
-                [img 
-                    (styles ++ [style "src" "images/flag.png"])
-                    []
-                ]
+                (styles ++
+                    [
+                    style "background-color" "green",
+                    onRightClick (Flag (row,col))
+                    ])
+                []
         Uncovered ->
                 case tile of
                     Mine -> 
@@ -197,6 +213,16 @@ squareToView size ((row,col), tile, attr) =
                                     style "position" "absolute"
                                     ] 
                                     [text (Debug.toString i)]])
+
+onRightClick : msg -> Html.Attribute msg
+onRightClick msg =
+    Html.Events.custom "contextmenu"
+        (Json.succeed
+            { message = msg
+            , stopPropagation = True
+            , preventDefault = True
+            }
+        )
 
 ----------------------------------------------------------------------------------
 -- Back-end functions
@@ -297,7 +323,7 @@ uncoverGrid x y (grid, status) =
         Just row -> 
             case (Array.get (x-1) row) of
                 Nothing -> (grid, status)
-                Just (_, _, Uncovered) -> (grid, status)
+                Just (_, _, Uncovered) -> (grid, status) 
                 Just (_, _, Flagged) ->  (grid, status) -- Clicking a flag should do nothing
                 Just (loc, NoMine number, attr) ->
                     let
@@ -330,3 +356,15 @@ uncoverAllHelper square =
     case square of
         (loc, NoMine num, Covered) -> (loc, NoMine num, Uncovered)
         _ -> square -- Don't uncover any mines or flags, ignored already uncovered squares
+
+-- Flag a square in the grid
+flagInGrid : Int -> Int -> Grid -> Grid
+flagInGrid x y grid =
+    let
+        row = extractMaybe (Array.get (y-1) grid)
+        (loc, mineInfo, covering) = extractMaybe (Array.get (x-1) row)
+    in
+        case covering of
+            Uncovered -> grid
+            Flagged -> Array.set (y-1) (Array.set (x-1) (loc, mineInfo, Covered) row) grid
+            Covered -> Array.set (y-1) (Array.set (x-1) (loc, mineInfo, Flagged) row) grid

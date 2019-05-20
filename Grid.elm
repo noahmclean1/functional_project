@@ -100,12 +100,16 @@ update msg model =
                 , status = Neither
                 , minePossibilities = []}, Cmd.none)
         Uncover (row, col) ->
-            let
-                newGrid = uncoverGrid col row model.grid
-            in
-                ({grid = newGrid
-                , status = Neither
-                , minePossibilities = []}, Cmd.none)             
+            if model.status == Neither 
+            then
+                let
+                    (newGrid, newStatus) = uncoverGrid col row (model.grid, model.status)
+                in
+                    ({grid = newGrid
+                    , status = newStatus
+                    , minePossibilities = []}, Cmd.none)
+            else
+                (model, Cmd.none)
                     
 
 subscriptions : Model -> Sub Msg
@@ -172,16 +176,18 @@ squareToView size ((row,col), tile, attr) =
                     []
                 ]
         Uncovered ->
-            div
-                styles
-                (case tile of
+                case tile of
                     Mine -> 
-                        [img 
-                            (styles ++ [style "src" "images/mine.png", style "background-color" "red"])
-                            []
-                        ]
+                        div
+                        (styles ++ [style "background-color" "red",
+                                    style "background-image" "url(images/mine.png",
+                                    style "background-repeat" "no-repeat",
+                                    style "background-size" ((Debug.toString size) ++ "px")])
+                        []
                     NoMine i ->
-                        case i of
+                        div
+                        styles
+                        (case i of
                             0 -> []
                             _ ->
                                 [div 
@@ -284,23 +290,23 @@ checkMine x y grid =
                 _ -> 0
 
 -- Recursive uncovering function that makes minesweeper actually play well
-uncoverGrid : Int -> Int -> Grid -> Grid
-uncoverGrid x y grid =
+uncoverGrid : Int -> Int -> (Grid, Status) -> (Grid, Status)
+uncoverGrid x y (grid, status) =
     case (Array.get (y-1) grid) of
-        Nothing -> grid
+        Nothing -> (grid, status)
         Just row -> 
             case (Array.get (x-1) row) of
-                Nothing -> grid
-                Just (_, _, Uncovered) -> grid
-                Just (_, _, Flagged) ->  grid -- Clicking a flag should do nothing
+                Nothing -> (grid, status)
+                Just (_, _, Uncovered) -> (grid, status)
+                Just (_, _, Flagged) ->  (grid, status) -- Clicking a flag should do nothing
                 Just (loc, NoMine number, attr) ->
                     let
                         newGrid = Array.set (y-1) (Array.set (x-1) (loc, NoMine number, Uncovered) row) grid
                     in
                         if number /= 0 then
-                            newGrid
+                            (newGrid, status)
                         else -- A bit messy, but this works!
-                            uncoverGrid (x-1) (y-1) newGrid 
+                            uncoverGrid (x-1) (y-1) (newGrid, status)
                                 |> uncoverGrid x (y-1) 
                                 |> uncoverGrid (x+1) (y-1) 
                                 |> uncoverGrid (x-1) y 
@@ -313,7 +319,7 @@ uncoverGrid x y grid =
                         newGrid = Array.set (y-1) (Array.set (x-1) (loc, Mine, Uncovered) row) grid
                         wholeGrid = uncoverAllGrid newGrid
                     in
-                        wholeGrid -- How can we show that this is a loss?                          
+                        (wholeGrid, Lost)                      
 
 uncoverAllGrid : Grid -> Grid
 uncoverAllGrid grid =

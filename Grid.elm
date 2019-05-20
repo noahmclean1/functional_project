@@ -188,6 +188,9 @@ squareToView size ((row,col), tile, attr) =
                 (styles ++
                     [
                     style "background-color" "green",
+                    style "background-image" "url(images/flag.png",
+                    style "background-repeat" "no-repeat",
+                    style "background-size" ((Debug.toString size) ++ "px"),
                     onRightClick (Flag (row,col))
                     ])
                 []

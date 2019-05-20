@@ -28,16 +28,17 @@ type Attr
 type Status
     = Won
     | Lost
-    | Neither
+    | Playing
+    | NotStarted
 
 type alias Loc = (Int, Int)
 
 type alias Grid = Array.Array (Array.Array Square)
 
 type Msg
-    = NewMinePos Int -- Generate a random (valid) index for a mine to be placed in
-    | NewMine Int Int -- Place a mine at the index, continue placing [num] mines
-    | PlaceNumbers -- Finalize the grid by setting each unmined square with an adjacency number
+    = NewMinePos Int (Maybe Int) Loc -- Generate a random (valid) index for a mine to be placed in
+    | NewMine Int Int Loc -- Place a mine at the index, continue placing [num] mines
+    | PlaceNumbers Loc -- Finalize the grid by setting each unmined square with an adjacency number
     | Uncover Loc -- Uncover the clicked square
     | Flag Loc -- Flag the clicked square as a mine
 
@@ -58,9 +59,9 @@ main =
         , view = view
         }
 
-initSize = 24
+initSize = 20
 
-numMines = 50
+numMines = 120
 
 ----------------------------------------------------------------------------------
 -- HTML/front-end functions
@@ -68,59 +69,74 @@ numMines = 50
 -- Create the initial grid, with numMines mines at the specified size
 init : () -> ( Model, Cmd Msg )
 init _ =
-    update (NewMinePos numMines)
-        { grid = generateBlankGrid initSize
-        , status = Neither
+        ({ grid = generateBlankGrid initSize
+        , status = NotStarted
         , minePossibilities = List.range 0 (initSize ^ 2 - 1)
-        }
+        }, Cmd.none)
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        NewMinePos num ->
-            (model, 
-                Random.generate 
-                (\n -> NewMine n num)
-                (Random.int 0 (List.length model.minePossibilities - 1)))
-        NewMine index num ->
+        NewMinePos num toRemove loc  ->
+            case toRemove of
+                Nothing ->
+                    (model, 
+                        Random.generate 
+                        (\n -> NewMine n num loc)
+                        (Random.int 0 (List.length model.minePossibilities - 1)))
+                Just clicked ->
+                    let
+                        newMinePossibilities = List.filter (\n -> n /= clicked) (model.minePossibilities)
+                    in
+                    ({grid = model.grid,
+                      status = model.status,
+                      minePossibilities = newMinePossibilities},
+                      Random.generate 
+                        (\n -> NewMine n num loc)
+                        (Random.int 0 (List.length newMinePossibilities - 1)))
+        NewMine index num loc ->
             case num of
-                0 -> update PlaceNumbers model
+                0 -> update (PlaceNumbers loc) model
                 _ ->
                     let
                         pos = get index model.minePossibilities
                     in
-                        update (NewMinePos (num - 1))
+                        update (NewMinePos (num - 1) Nothing loc)
                             { grid = addMine (pos + 1) model.grid
-                            , status = Neither
+                            , status = NotStarted
                             , minePossibilities = List.filter (\n -> n /= pos) model.minePossibilities
                             }
-        PlaceNumbers -> 
+        PlaceNumbers loc -> 
             let
                 newGrid = calculateNumbers model.grid
             in
-                ({grid = newGrid
-                , status = Neither
-                , minePossibilities = []}, Cmd.none)
+                update 
+                (Uncover loc) 
+                {grid = newGrid
+                , status = Playing
+                , minePossibilities = []}
         Uncover (row, col) ->
-            if model.status == Neither 
-            then
-                let
-                    -- TODO implement number clicking
-                    (newGrid, newStatus) = uncoverGrid col row (model.grid, model.status)
-                in
-                    ({grid = newGrid
-                    , status = newStatus
-                    , minePossibilities = []}, Cmd.none)
-            else
-                (model, Cmd.none)
+            case model.status of
+                Playing ->
+                    let
+                        -- TODO implement number clicking
+                        (newGrid, newStatus) = uncoverGrid col row (model.grid, model.status)
+                    in
+                        ({grid = newGrid
+                        , status = newStatus
+                        , minePossibilities = []}, Cmd.none)
+                NotStarted ->
+                    update (NewMinePos numMines (Just ((locToInt (row-1,col-1) initSize) - 1)) (row,col)) model
+                _ ->
+                    (model, Cmd.none)
         Flag (row,col) ->
-            if model.status == Neither
+            if model.status == Playing
             then
                 let
                     newGrid = flagInGrid col row model.grid
                 in
                     ({grid= newGrid
-                    , status = Neither
+                    , status = Playing
                     , minePossibilities = []}, Cmd.none)                        
             else
                 (model, Cmd.none)
@@ -132,7 +148,8 @@ subscriptions model =
 
 view : Model -> Html Msg
 view model =
-    gridToView model.grid 500
+    div []
+    [gridToView model.grid 500]
 
 gridToView : Grid -> Int -> Html Msg
 gridToView grid size =
@@ -251,6 +268,10 @@ intToLoc n size =
             Debug.todo "intToLoc: n out of range"
         else
             (row, col)
+
+locToInt : Loc -> Int -> Int
+locToInt (row,col) size =
+    row * size + col + 1
 
 get : Int -> List a -> a
 get n l =

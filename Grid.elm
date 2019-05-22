@@ -41,15 +41,24 @@ type Msg
     | PlaceNumbers Loc -- Finalize the grid by setting each unmined square with an adjacency number
     | Uncover Loc -- Uncover the clicked square
     | Flag Loc -- Flag the clicked square as a mine
+    | SetDifficulty Int Int -- Set the difficulty (aka set the size of the board and number of mines)
 
 type alias Model =
     { grid : Grid
     , status : Status
     , minePossibilities : List Int
+    , size : Int
+    , numMines : Int
     }
 
 ----------------------------------------------------------------------------------
 -- "Global" variables
+
+initSize = 8
+
+initNumMines = 10
+
+pixelSize = 500
 
 main =
     Browser.element
@@ -59,19 +68,17 @@ main =
         , view = view
         }
 
-initSize = 20
-
-numMines = 120
-
 ----------------------------------------------------------------------------------
 -- HTML/front-end functions
 
 -- Create the initial grid, with numMines mines at the specified size
 init : () -> ( Model, Cmd Msg )
-init _ =
+init () =
         ({ grid = generateBlankGrid initSize
         , status = NotStarted
         , minePossibilities = List.range 0 (initSize ^ 2 - 1)
+        , size = initSize
+        , numMines = initNumMines
         }, Cmd.none)
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -90,7 +97,9 @@ update msg model =
                     in
                     ({grid = model.grid,
                       status = model.status,
-                      minePossibilities = newMinePossibilities},
+                      minePossibilities = newMinePossibilities,
+                      size = model.size,
+                      numMines = model.numMines},
                       Random.generate 
                         (\n -> NewMine n num loc)
                         (Random.int 0 (List.length newMinePossibilities - 1)))
@@ -102,9 +111,11 @@ update msg model =
                         pos = get index model.minePossibilities
                     in
                         update (NewMinePos (num - 1) Nothing loc)
-                            { grid = addMine (pos + 1) model.grid
+                            { grid = addMine (pos + 1) model.grid model.size
                             , status = NotStarted
                             , minePossibilities = List.filter (\n -> n /= pos) model.minePossibilities
+                            , size = model.size
+                            , numMines = model.numMines
                             }
         PlaceNumbers loc -> 
             let
@@ -114,7 +125,9 @@ update msg model =
                 (Uncover loc) 
                 {grid = newGrid
                 , status = Playing
-                , minePossibilities = []}
+                , minePossibilities = []
+                , size = model.size
+                , numMines = model.numMines}
         Uncover (row, col) ->
             case model.status of
                 Playing ->
@@ -124,9 +137,11 @@ update msg model =
                     in
                         ({grid = newGrid
                         , status = newStatus
-                        , minePossibilities = []}, Cmd.none)
+                        , minePossibilities = []
+                        , size = model.size
+                        , numMines = model.numMines}, Cmd.none)
                 NotStarted ->
-                    update (NewMinePos numMines (Just ((locToInt (row-1,col-1) initSize) - 1)) (row,col)) model
+                    update (NewMinePos model.numMines (Just ((locToInt (row-1,col-1) model.size) - 1)) (row,col)) model
                 _ ->
                     (model, Cmd.none)
         Flag (row,col) ->
@@ -137,9 +152,13 @@ update msg model =
                 in
                     ({grid= newGrid
                     , status = Playing
-                    , minePossibilities = []}, Cmd.none)                        
+                    , minePossibilities = []
+                    , size = model.size
+                    , numMines = model.numMines}, Cmd.none)                        
             else
                 (model, Cmd.none)
+        SetDifficulty size numMines ->
+            initDifficulty size numMines
                     
 
 subscriptions : Model -> Sub Msg
@@ -149,7 +168,31 @@ subscriptions model =
 view : Model -> Html Msg
 view model =
     div []
-    [gridToView model.grid 500]
+    [buttons model.numMines, gridToView model.grid pixelSize]
+
+buttons : Int -> Html Msg
+buttons numMines =
+    let
+        selected =
+            case numMines of
+                10 -> 1
+                40 -> 2
+                99 -> 3
+                _ -> Debug.todo "buttons: bad case"
+        buttonStyles =
+            [ style "width" "32%"
+            , style "margin-right" "6px"]
+    in
+    
+    div 
+
+    [ style "width" ((Debug.toString pixelSize) ++ "px")
+    , style "margin-bottom" "5px"
+    , style "margin-left" "5px"]
+
+    [ button (buttonStyles ++ [onClick (SetDifficulty 8 10)]) [Html.text "Easy (8x8, 10 Mines)"]
+    , button (buttonStyles ++ [onClick (SetDifficulty 16 40)]) [Html.text "Medium (16x16, 24 Mines)"]
+    , button (buttonStyles ++ [onClick (SetDifficulty 24 99)]) [Html.text "Hard (24x24, 99 Mines)"]]
 
 gridToView : Grid -> Int -> Html Msg
 gridToView grid size =
@@ -286,10 +329,10 @@ extractMaybe maybe =
         Nothing -> Debug.todo "extractMaybe: bad case"
 
 -- 2nd step of initialization (called repeatedly in update): Adds a single mine at a given location
-addMine : Int -> Grid -> Grid
-addMine n g =
+addMine : Int -> Grid -> Int -> Grid
+addMine n g size =
     let
-        pos = intToLoc n initSize
+        pos = intToLoc n size
         rowNum = Tuple.first pos
         colNum = Tuple.second pos
         row = extractMaybe (Array.get rowNum g)
@@ -392,3 +435,12 @@ flagInGrid x y grid =
             Uncovered -> grid
             Flagged -> Array.set (y-1) (Array.set (x-1) (loc, mineInfo, Covered) row) grid
             Covered -> Array.set (y-1) (Array.set (x-1) (loc, mineInfo, Flagged) row) grid
+
+initDifficulty : Int -> Int -> ( Model, Cmd Msg )
+initDifficulty size numMines =
+        ({ grid = generateBlankGrid size
+        , status = NotStarted
+        , minePossibilities = List.range 0 (size ^ 2 - 1)
+        , size = size
+        , numMines = numMines
+        }, Cmd.none)

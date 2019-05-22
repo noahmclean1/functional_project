@@ -195,7 +195,9 @@ statusText model size =
     ]
     [ Html.text ("Mines Present: " ++ (Debug.toString model.numMines))
     , br [] []
-    , Html.text ("Flags Placed: " ++ (Debug.toString model.numFlags))]
+    , Html.text ("Flags Placed: " ++ (Debug.toString model.numFlags))
+    , br [] []
+    , Html.text ("Won: " ++ (Debug.toString (checkWon model)))]
 
 buttons : Int -> Html Msg
 buttons numMines =
@@ -474,3 +476,16 @@ flagInGrid x y grid =
             Uncovered -> (grid, 0)
             Flagged -> (Array.set (y-1) (Array.set (x-1) (loc, mineInfo, Covered) row) grid, -1)
             Covered -> (Array.set (y-1) (Array.set (x-1) (loc, mineInfo, Flagged) row) grid, 1)
+
+checkWon : Model -> Bool
+checkWon model =
+    let
+        spacesList = (List.range 1 (model.size ^ 2))
+        getSquare (row,col) = Array.get (col) (extractMaybe (Array.get (row) model.grid))
+        squaresList = (List.map (\m -> (extractMaybe (getSquare (intToLoc m model.size)))) spacesList)
+    in
+        List.all (\n -> case n of
+                            (_, Mine, _) -> True
+                            (_, NoMine _, Uncovered) -> True
+                            _ -> False) squaresList
+

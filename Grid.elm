@@ -301,6 +301,7 @@ squareToView size ((row,col), tile, attr) =
                         (styles ++ [style "background-color" "red",
                                     style "background-image" "url(images/mine.png",
                                     style "background-repeat" "no-repeat",
+                                    onClick (Uncover (row,col)),
                                     style "background-size" ((Debug.toString size) ++ "px")])
                         []
                     NoMine i ->

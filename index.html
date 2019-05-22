@@ -4960,8 +4960,8 @@ var author$project$Grid$extractMaybe = function (maybe) {
 		return _Debug_todo(
 			'Grid',
 			{
-				start: {line: 368, column: 20},
-				end: {line: 368, column: 30}
+				start: {line: 371, column: 20},
+				end: {line: 371, column: 30}
 			})('extractMaybe: bad case');
 	}
 };
@@ -4974,8 +4974,8 @@ var author$project$Grid$intToLoc = F2(
 		return (_Utils_cmp(n, total) > 0) ? _Debug_todo(
 			'Grid',
 			{
-				start: {line: 350, column: 13},
-				end: {line: 350, column: 23}
+				start: {line: 353, column: 13},
+				end: {line: 353, column: 23}
 			})('intToLoc: n out of range') : _Utils_Tuple2(row, col);
 	});
 var elm$core$Bitwise$shiftRightZfBy = _Bitwise_shiftRightZfBy;
@@ -5615,8 +5615,8 @@ var author$project$Grid$get = F2(
 			return _Debug_todo(
 				'Grid',
 				{
-					start: {line: 362, column: 14},
-					end: {line: 362, column: 24}
+					start: {line: 365, column: 14},
+					end: {line: 365, column: 24}
 				})('get: bad case');
 		}
 	});
@@ -6033,8 +6033,8 @@ var author$project$Grid$buttons = function (numMines) {
 				return _Debug_todo(
 					'Grid',
 					{
-						start: {line: 207, column: 22},
-						end: {line: 207, column: 32}
+						start: {line: 209, column: 22},
+						end: {line: 209, column: 32}
 					})('buttons: bad case');
 		}
 	}();
@@ -6207,6 +6207,9 @@ var author$project$Grid$squareToView = F2(
 									A2(elm$html$Html$Attributes$style, 'background-color', 'red'),
 									A2(elm$html$Html$Attributes$style, 'background-image', 'url(images/mine.png'),
 									A2(elm$html$Html$Attributes$style, 'background-repeat', 'no-repeat'),
+									elm$html$Html$Events$onClick(
+									author$project$Grid$Uncover(
+										_Utils_Tuple2(row, col))),
 									A2(
 									elm$html$Html$Attributes$style,
 									'background-size',
@@ -6325,6 +6328,93 @@ var author$project$Grid$instructionText = function (size) {
 				elm$html$Html$text('Right-click to flag a space')
 			]));
 };
+var elm$core$Basics$composeL = F3(
+	function (g, f, x) {
+		return g(
+			f(x));
+	});
+var elm$core$Basics$not = _Basics_not;
+var elm$core$List$any = F2(
+	function (isOkay, list) {
+		any:
+		while (true) {
+			if (!list.b) {
+				return false;
+			} else {
+				var x = list.a;
+				var xs = list.b;
+				if (isOkay(x)) {
+					return true;
+				} else {
+					var $temp$isOkay = isOkay,
+						$temp$list = xs;
+					isOkay = $temp$isOkay;
+					list = $temp$list;
+					continue any;
+				}
+			}
+		}
+	});
+var elm$core$List$all = F2(
+	function (isOkay, list) {
+		return !A2(
+			elm$core$List$any,
+			A2(elm$core$Basics$composeL, elm$core$Basics$not, isOkay),
+			list);
+	});
+var elm$core$List$map = F2(
+	function (f, xs) {
+		return A3(
+			elm$core$List$foldr,
+			F2(
+				function (x, acc) {
+					return A2(
+						elm$core$List$cons,
+						f(x),
+						acc);
+				}),
+			_List_Nil,
+			xs);
+	});
+var author$project$Grid$checkWon = function (model) {
+	var spacesList = A2(
+		elm$core$List$range,
+		1,
+		A2(elm$core$Basics$pow, model.size, 2));
+	var getSquare = function (_n3) {
+		var row = _n3.a;
+		var col = _n3.b;
+		return A2(
+			elm$core$Array$get,
+			col,
+			author$project$Grid$extractMaybe(
+				A2(elm$core$Array$get, row, model.grid)));
+	};
+	var squaresList = A2(
+		elm$core$List$map,
+		function (m) {
+			return author$project$Grid$extractMaybe(
+				getSquare(
+					A2(author$project$Grid$intToLoc, m, model.size)));
+		},
+		spacesList);
+	return A2(
+		elm$core$List$all,
+		function (n) {
+			if (n.b.$ === 'Mine') {
+				var _n1 = n.b;
+				return true;
+			} else {
+				if (n.c.$ === 'Uncovered') {
+					var _n2 = n.c;
+					return true;
+				} else {
+					return false;
+				}
+			}
+		},
+		squaresList);
+};
 var author$project$Grid$statusText = F2(
 	function (model, size) {
 		return A2(
@@ -6355,7 +6445,11 @@ var author$project$Grid$statusText = F2(
 					'Mines Present: ' + elm$core$Debug$toString(model.numMines)),
 					A2(elm$html$Html$br, _List_Nil, _List_Nil),
 					elm$html$Html$text(
-					'Flags Placed: ' + elm$core$Debug$toString(model.numFlags))
+					'Flags Placed: ' + elm$core$Debug$toString(model.numFlags)),
+					A2(elm$html$Html$br, _List_Nil, _List_Nil),
+					elm$html$Html$text(
+					'Won: ' + elm$core$Debug$toString(
+						author$project$Grid$checkWon(model)))
 				]));
 	});
 var author$project$Grid$view = function (model) {
@@ -6392,20 +6486,6 @@ var elm$core$Task$Perform = function (a) {
 	return {$: 'Perform', a: a};
 };
 var elm$core$Task$init = elm$core$Task$succeed(_Utils_Tuple0);
-var elm$core$List$map = F2(
-	function (f, xs) {
-		return A3(
-			elm$core$List$foldr,
-			F2(
-				function (x, acc) {
-					return A2(
-						elm$core$List$cons,
-						f(x),
-						acc);
-				}),
-			_List_Nil,
-			xs);
-	});
 var elm$core$Task$map = F2(
 	function (func, taskA) {
 		return A2(

@@ -863,43 +863,6 @@ var _Basics_xor = F2(function(a, b) { return a !== b; });
 
 
 
-var _Bitwise_and = F2(function(a, b)
-{
-	return a & b;
-});
-
-var _Bitwise_or = F2(function(a, b)
-{
-	return a | b;
-});
-
-var _Bitwise_xor = F2(function(a, b)
-{
-	return a ^ b;
-});
-
-function _Bitwise_complement(a)
-{
-	return ~a;
-};
-
-var _Bitwise_shiftLeftBy = F2(function(offset, a)
-{
-	return a << offset;
-});
-
-var _Bitwise_shiftRightBy = F2(function(offset, a)
-{
-	return a >> offset;
-});
-
-var _Bitwise_shiftRightZfBy = F2(function(offset, a)
-{
-	return a >>> offset;
-});
-
-
-
 function _Char_toCode(char)
 {
 	var code = char.charCodeAt(0);
@@ -2358,6 +2321,43 @@ function _Platform_mergeExportsDebug(moduleName, obj, exports)
 			: (obj[name] = exports[name]);
 	}
 }
+
+
+
+var _Bitwise_and = F2(function(a, b)
+{
+	return a & b;
+});
+
+var _Bitwise_or = F2(function(a, b)
+{
+	return a | b;
+});
+
+var _Bitwise_xor = F2(function(a, b)
+{
+	return a ^ b;
+});
+
+function _Bitwise_complement(a)
+{
+	return ~a;
+};
+
+var _Bitwise_shiftLeftBy = F2(function(offset, a)
+{
+	return a << offset;
+});
+
+var _Bitwise_shiftRightBy = F2(function(offset, a)
+{
+	return a >> offset;
+});
+
+var _Bitwise_shiftRightZfBy = F2(function(offset, a)
+{
+	return a >>> offset;
+});
 
 
 
@@ -4403,10 +4403,7 @@ function _Browser_load(url)
 		}
 	}));
 }
-var author$project$Grid$Neither = {$: 'Neither'};
-var author$project$Grid$NewMinePos = function (a) {
-	return {$: 'NewMinePos', a: a};
-};
+var author$project$Grid$NotStarted = {$: 'NotStarted'};
 var author$project$Grid$Covered = {$: 'Covered'};
 var author$project$Grid$NoMine = function (a) {
 	return {$: 'NoMine', a: a};
@@ -4686,13 +4683,273 @@ var author$project$Grid$generateBlankGrid = function (size) {
 			return A2(author$project$Grid$generateBlankRow, n + 1, size);
 		});
 };
-var author$project$Grid$initSize = 24;
-var author$project$Grid$numMines = 50;
-var author$project$Grid$NewMine = F2(
-	function (a, b) {
-		return {$: 'NewMine', a: a, b: b};
+var elm$core$Basics$pow = _Basics_pow;
+var elm$core$List$rangeHelp = F3(
+	function (lo, hi, list) {
+		rangeHelp:
+		while (true) {
+			if (_Utils_cmp(lo, hi) < 1) {
+				var $temp$lo = lo,
+					$temp$hi = hi - 1,
+					$temp$list = A2(elm$core$List$cons, hi, list);
+				lo = $temp$lo;
+				hi = $temp$hi;
+				list = $temp$list;
+				continue rangeHelp;
+			} else {
+				return list;
+			}
+		}
 	});
-var author$project$Grid$PlaceNumbers = {$: 'PlaceNumbers'};
+var elm$core$List$range = F2(
+	function (lo, hi) {
+		return A3(elm$core$List$rangeHelp, lo, hi, _List_Nil);
+	});
+var elm$core$Basics$True = {$: 'True'};
+var elm$core$Result$isOk = function (result) {
+	if (result.$ === 'Ok') {
+		return true;
+	} else {
+		return false;
+	}
+};
+var elm$core$Maybe$Just = function (a) {
+	return {$: 'Just', a: a};
+};
+var elm$core$Maybe$Nothing = {$: 'Nothing'};
+var elm$core$Result$Err = function (a) {
+	return {$: 'Err', a: a};
+};
+var elm$core$Result$Ok = function (a) {
+	return {$: 'Ok', a: a};
+};
+var elm$json$Json$Decode$Failure = F2(
+	function (a, b) {
+		return {$: 'Failure', a: a, b: b};
+	});
+var elm$json$Json$Decode$Field = F2(
+	function (a, b) {
+		return {$: 'Field', a: a, b: b};
+	});
+var elm$json$Json$Decode$Index = F2(
+	function (a, b) {
+		return {$: 'Index', a: a, b: b};
+	});
+var elm$json$Json$Decode$OneOf = function (a) {
+	return {$: 'OneOf', a: a};
+};
+var elm$core$Basics$and = _Basics_and;
+var elm$core$Basics$append = _Utils_append;
+var elm$core$Basics$or = _Basics_or;
+var elm$core$Char$toCode = _Char_toCode;
+var elm$core$Char$isLower = function (_char) {
+	var code = elm$core$Char$toCode(_char);
+	return (97 <= code) && (code <= 122);
+};
+var elm$core$Char$isUpper = function (_char) {
+	var code = elm$core$Char$toCode(_char);
+	return (code <= 90) && (65 <= code);
+};
+var elm$core$Char$isAlpha = function (_char) {
+	return elm$core$Char$isLower(_char) || elm$core$Char$isUpper(_char);
+};
+var elm$core$Char$isDigit = function (_char) {
+	var code = elm$core$Char$toCode(_char);
+	return (code <= 57) && (48 <= code);
+};
+var elm$core$Char$isAlphaNum = function (_char) {
+	return elm$core$Char$isLower(_char) || (elm$core$Char$isUpper(_char) || elm$core$Char$isDigit(_char));
+};
+var elm$core$List$length = function (xs) {
+	return A3(
+		elm$core$List$foldl,
+		F2(
+			function (_n0, i) {
+				return i + 1;
+			}),
+		0,
+		xs);
+};
+var elm$core$List$map2 = _List_map2;
+var elm$core$List$indexedMap = F2(
+	function (f, xs) {
+		return A3(
+			elm$core$List$map2,
+			f,
+			A2(
+				elm$core$List$range,
+				0,
+				elm$core$List$length(xs) - 1),
+			xs);
+	});
+var elm$core$String$all = _String_all;
+var elm$core$String$fromInt = _String_fromNumber;
+var elm$core$String$join = F2(
+	function (sep, chunks) {
+		return A2(
+			_String_join,
+			sep,
+			_List_toArray(chunks));
+	});
+var elm$core$String$uncons = _String_uncons;
+var elm$core$String$split = F2(
+	function (sep, string) {
+		return _List_fromArray(
+			A2(_String_split, sep, string));
+	});
+var elm$json$Json$Decode$indent = function (str) {
+	return A2(
+		elm$core$String$join,
+		'\n    ',
+		A2(elm$core$String$split, '\n', str));
+};
+var elm$json$Json$Encode$encode = _Json_encode;
+var elm$json$Json$Decode$errorOneOf = F2(
+	function (i, error) {
+		return '\n\n(' + (elm$core$String$fromInt(i + 1) + (') ' + elm$json$Json$Decode$indent(
+			elm$json$Json$Decode$errorToString(error))));
+	});
+var elm$json$Json$Decode$errorToString = function (error) {
+	return A2(elm$json$Json$Decode$errorToStringHelp, error, _List_Nil);
+};
+var elm$json$Json$Decode$errorToStringHelp = F2(
+	function (error, context) {
+		errorToStringHelp:
+		while (true) {
+			switch (error.$) {
+				case 'Field':
+					var f = error.a;
+					var err = error.b;
+					var isSimple = function () {
+						var _n1 = elm$core$String$uncons(f);
+						if (_n1.$ === 'Nothing') {
+							return false;
+						} else {
+							var _n2 = _n1.a;
+							var _char = _n2.a;
+							var rest = _n2.b;
+							return elm$core$Char$isAlpha(_char) && A2(elm$core$String$all, elm$core$Char$isAlphaNum, rest);
+						}
+					}();
+					var fieldName = isSimple ? ('.' + f) : ('[\'' + (f + '\']'));
+					var $temp$error = err,
+						$temp$context = A2(elm$core$List$cons, fieldName, context);
+					error = $temp$error;
+					context = $temp$context;
+					continue errorToStringHelp;
+				case 'Index':
+					var i = error.a;
+					var err = error.b;
+					var indexName = '[' + (elm$core$String$fromInt(i) + ']');
+					var $temp$error = err,
+						$temp$context = A2(elm$core$List$cons, indexName, context);
+					error = $temp$error;
+					context = $temp$context;
+					continue errorToStringHelp;
+				case 'OneOf':
+					var errors = error.a;
+					if (!errors.b) {
+						return 'Ran into a Json.Decode.oneOf with no possibilities' + function () {
+							if (!context.b) {
+								return '!';
+							} else {
+								return ' at json' + A2(
+									elm$core$String$join,
+									'',
+									elm$core$List$reverse(context));
+							}
+						}();
+					} else {
+						if (!errors.b.b) {
+							var err = errors.a;
+							var $temp$error = err,
+								$temp$context = context;
+							error = $temp$error;
+							context = $temp$context;
+							continue errorToStringHelp;
+						} else {
+							var starter = function () {
+								if (!context.b) {
+									return 'Json.Decode.oneOf';
+								} else {
+									return 'The Json.Decode.oneOf at json' + A2(
+										elm$core$String$join,
+										'',
+										elm$core$List$reverse(context));
+								}
+							}();
+							var introduction = starter + (' failed in the following ' + (elm$core$String$fromInt(
+								elm$core$List$length(errors)) + ' ways:'));
+							return A2(
+								elm$core$String$join,
+								'\n\n',
+								A2(
+									elm$core$List$cons,
+									introduction,
+									A2(elm$core$List$indexedMap, elm$json$Json$Decode$errorOneOf, errors)));
+						}
+					}
+				default:
+					var msg = error.a;
+					var json = error.b;
+					var introduction = function () {
+						if (!context.b) {
+							return 'Problem with the given value:\n\n';
+						} else {
+							return 'Problem with the value at json' + (A2(
+								elm$core$String$join,
+								'',
+								elm$core$List$reverse(context)) + ':\n\n    ');
+						}
+					}();
+					return introduction + (elm$json$Json$Decode$indent(
+						A2(elm$json$Json$Encode$encode, 4, json)) + ('\n\n' + msg));
+			}
+		}
+	});
+var elm$core$Platform$Cmd$batch = _Platform_batch;
+var elm$core$Platform$Cmd$none = elm$core$Platform$Cmd$batch(_List_Nil);
+var author$project$Grid$initDifficulty = F2(
+	function (size, numMines) {
+		return _Utils_Tuple2(
+			{
+				grid: author$project$Grid$generateBlankGrid(size),
+				minePossibilities: A2(
+					elm$core$List$range,
+					0,
+					A2(elm$core$Basics$pow, size, 2) - 1),
+				numFlags: 0,
+				numMines: numMines,
+				size: size,
+				status: author$project$Grid$NotStarted
+			},
+			elm$core$Platform$Cmd$none);
+	});
+var author$project$Grid$initNumMines = 10;
+var author$project$Grid$initSize = 8;
+var author$project$Grid$init = function (_n0) {
+	return A2(author$project$Grid$initDifficulty, author$project$Grid$initSize, author$project$Grid$initNumMines);
+};
+var elm$core$Platform$Sub$batch = _Platform_batch;
+var elm$core$Platform$Sub$none = elm$core$Platform$Sub$batch(_List_Nil);
+var author$project$Grid$subscriptions = function (model) {
+	return elm$core$Platform$Sub$none;
+};
+var author$project$Grid$NewMine = F3(
+	function (a, b, c) {
+		return {$: 'NewMine', a: a, b: b, c: c};
+	});
+var author$project$Grid$NewMinePos = F3(
+	function (a, b, c) {
+		return {$: 'NewMinePos', a: a, b: b, c: c};
+	});
+var author$project$Grid$PlaceNumbers = function (a) {
+	return {$: 'PlaceNumbers', a: a};
+};
+var author$project$Grid$Playing = {$: 'Playing'};
+var author$project$Grid$Uncover = function (a) {
+	return {$: 'Uncover', a: a};
+};
 var author$project$Grid$Mine = {$: 'Mine'};
 var elm$core$Debug$todo = _Debug_todo;
 var author$project$Grid$extractMaybe = function (maybe) {
@@ -4703,12 +4960,11 @@ var author$project$Grid$extractMaybe = function (maybe) {
 		return _Debug_todo(
 			'Grid',
 			{
-				start: {line: 262, column: 20},
-				end: {line: 262, column: 30}
+				start: {line: 368, column: 20},
+				end: {line: 368, column: 30}
 			})('extractMaybe: bad case');
 	}
 };
-var elm$core$Basics$pow = _Basics_pow;
 var author$project$Grid$intToLoc = F2(
 	function (n, size) {
 		var total = A2(elm$core$Basics$pow, size, 2);
@@ -4718,8 +4974,8 @@ var author$project$Grid$intToLoc = F2(
 		return (_Utils_cmp(n, total) > 0) ? _Debug_todo(
 			'Grid',
 			{
-				start: {line: 248, column: 13},
-				end: {line: 248, column: 23}
+				start: {line: 350, column: 13},
+				end: {line: 350, column: 23}
 			})('intToLoc: n out of range') : _Utils_Tuple2(row, col);
 	});
 var elm$core$Bitwise$shiftRightZfBy = _Bitwise_shiftRightZfBy;
@@ -4752,11 +5008,6 @@ var elm$core$Array$tailIndex = function (len) {
 	return (len >>> 5) << 5;
 };
 var elm$core$Basics$ge = _Utils_ge;
-var elm$core$Basics$or = _Basics_or;
-var elm$core$Maybe$Just = function (a) {
-	return {$: 'Just', a: a};
-};
-var elm$core$Maybe$Nothing = {$: 'Nothing'};
 var elm$core$Array$get = F2(
 	function (index, _n0) {
 		var len = _n0.a;
@@ -4816,9 +5067,9 @@ var elm$core$Tuple$second = function (_n0) {
 	var y = _n0.b;
 	return y;
 };
-var author$project$Grid$addMine = F2(
-	function (n, g) {
-		var pos = A2(author$project$Grid$intToLoc, n, author$project$Grid$initSize);
+var author$project$Grid$addMine = F3(
+	function (n, g, size) {
+		var pos = A2(author$project$Grid$intToLoc, n, size);
 		var rowNum = pos.a;
 		var row = author$project$Grid$extractMaybe(
 			A2(elm$core$Array$get, rowNum, g));
@@ -4921,6 +5172,250 @@ var author$project$Grid$calculateNumbers = function (minedGrid) {
 		},
 		minedGrid);
 };
+var author$project$Grid$flagCheck = F3(
+	function (acc, locs, grid) {
+		flagCheck:
+		while (true) {
+			if (!locs.b) {
+				return acc;
+			} else {
+				var _n1 = locs.a;
+				var x = _n1.a;
+				var y = _n1.b;
+				var rest = locs.b;
+				var _n2 = A2(elm$core$Array$get, y - 1, grid);
+				if (_n2.$ === 'Nothing') {
+					var $temp$acc = acc,
+						$temp$locs = rest,
+						$temp$grid = grid;
+					acc = $temp$acc;
+					locs = $temp$locs;
+					grid = $temp$grid;
+					continue flagCheck;
+				} else {
+					var row = _n2.a;
+					var _n3 = A2(elm$core$Array$get, x - 1, row);
+					if ((_n3.$ === 'Just') && (_n3.a.c.$ === 'Flagged')) {
+						var _n4 = _n3.a;
+						var _n5 = _n4.c;
+						var $temp$acc = acc + 1,
+							$temp$locs = rest,
+							$temp$grid = grid;
+						acc = $temp$acc;
+						locs = $temp$locs;
+						grid = $temp$grid;
+						continue flagCheck;
+					} else {
+						var $temp$acc = acc,
+							$temp$locs = rest,
+							$temp$grid = grid;
+						acc = $temp$acc;
+						locs = $temp$locs;
+						grid = $temp$grid;
+						continue flagCheck;
+					}
+				}
+			}
+		}
+	});
+var author$project$Grid$Lost = {$: 'Lost'};
+var author$project$Grid$Uncovered = {$: 'Uncovered'};
+var author$project$Grid$uncoverAllHelper = function (square) {
+	if ((square.b.$ === 'NoMine') && (square.c.$ === 'Covered')) {
+		var loc = square.a;
+		var num = square.b.a;
+		var _n1 = square.c;
+		return _Utils_Tuple3(
+			loc,
+			author$project$Grid$NoMine(num),
+			author$project$Grid$Uncovered);
+	} else {
+		return square;
+	}
+};
+var author$project$Grid$uncoverAllGrid = function (grid) {
+	return A2(
+		elm$core$Array$map,
+		function (row) {
+			return A2(elm$core$Array$map, author$project$Grid$uncoverAllHelper, row);
+		},
+		grid);
+};
+var elm$core$Basics$neq = _Utils_notEqual;
+var author$project$Grid$uncoverGrid = F3(
+	function (x, y, _n0) {
+		var grid = _n0.a;
+		var status = _n0.b;
+		var _n1 = A2(elm$core$Array$get, y - 1, grid);
+		if (_n1.$ === 'Nothing') {
+			return _Utils_Tuple2(grid, status);
+		} else {
+			var row = _n1.a;
+			var _n2 = A2(elm$core$Array$get, x - 1, row);
+			if (_n2.$ === 'Nothing') {
+				return _Utils_Tuple2(grid, status);
+			} else {
+				switch (_n2.a.c.$) {
+					case 'Uncovered':
+						var _n3 = _n2.a;
+						var _n4 = _n3.c;
+						return _Utils_Tuple2(grid, status);
+					case 'Flagged':
+						var _n5 = _n2.a;
+						var _n6 = _n5.c;
+						return _Utils_Tuple2(grid, status);
+					default:
+						if (_n2.a.b.$ === 'NoMine') {
+							var _n7 = _n2.a;
+							var loc = _n7.a;
+							var number = _n7.b.a;
+							var attr = _n7.c;
+							var newGrid = A3(
+								elm$core$Array$set,
+								y - 1,
+								A3(
+									elm$core$Array$set,
+									x - 1,
+									_Utils_Tuple3(
+										loc,
+										author$project$Grid$NoMine(number),
+										author$project$Grid$Uncovered),
+									row),
+								grid);
+							return number ? _Utils_Tuple2(newGrid, status) : A3(
+								author$project$Grid$uncoverGrid,
+								x + 1,
+								y + 1,
+								A3(
+									author$project$Grid$uncoverGrid,
+									x,
+									y + 1,
+									A3(
+										author$project$Grid$uncoverGrid,
+										x - 1,
+										y + 1,
+										A3(
+											author$project$Grid$uncoverGrid,
+											x + 1,
+											y,
+											A3(
+												author$project$Grid$uncoverGrid,
+												x - 1,
+												y,
+												A3(
+													author$project$Grid$uncoverGrid,
+													x + 1,
+													y - 1,
+													A3(
+														author$project$Grid$uncoverGrid,
+														x,
+														y - 1,
+														A3(
+															author$project$Grid$uncoverGrid,
+															x - 1,
+															y - 1,
+															_Utils_Tuple2(newGrid, status)))))))));
+						} else {
+							var _n8 = _n2.a;
+							var loc = _n8.a;
+							var newGrid = A3(
+								elm$core$Array$set,
+								y - 1,
+								A3(
+									elm$core$Array$set,
+									x - 1,
+									_Utils_Tuple3(loc, author$project$Grid$Mine, author$project$Grid$Uncovered),
+									row),
+								grid);
+							var wholeGrid = author$project$Grid$uncoverAllGrid(newGrid);
+							return _Utils_Tuple2(wholeGrid, author$project$Grid$Lost);
+						}
+				}
+			}
+		}
+	});
+var author$project$Grid$neighborUncover = F4(
+	function (x, y, numNeeded, _n0) {
+		var grid = _n0.a;
+		var status = _n0.b;
+		var count = A3(
+			author$project$Grid$flagCheck,
+			0,
+			_List_fromArray(
+				[
+					_Utils_Tuple2(x - 1, y - 1),
+					_Utils_Tuple2(x, y - 1),
+					_Utils_Tuple2(x + 1, y - 1),
+					_Utils_Tuple2(x - 1, y),
+					_Utils_Tuple2(x + 1, y),
+					_Utils_Tuple2(x - 1, y + 1),
+					_Utils_Tuple2(x, y + 1),
+					_Utils_Tuple2(x + 1, y + 1)
+				]),
+			grid);
+		return _Utils_eq(count, numNeeded) ? A3(
+			author$project$Grid$uncoverGrid,
+			x + 1,
+			y + 1,
+			A3(
+				author$project$Grid$uncoverGrid,
+				x,
+				y + 1,
+				A3(
+					author$project$Grid$uncoverGrid,
+					x - 1,
+					y + 1,
+					A3(
+						author$project$Grid$uncoverGrid,
+						x + 1,
+						y,
+						A3(
+							author$project$Grid$uncoverGrid,
+							x - 1,
+							y,
+							A3(
+								author$project$Grid$uncoverGrid,
+								x + 1,
+								y - 1,
+								A3(
+									author$project$Grid$uncoverGrid,
+									x,
+									y - 1,
+									A3(
+										author$project$Grid$uncoverGrid,
+										x - 1,
+										y - 1,
+										_Utils_Tuple2(grid, status))))))))) : _Utils_Tuple2(grid, status);
+	});
+var author$project$Grid$clicking = F3(
+	function (x, y, _n0) {
+		var grid = _n0.a;
+		var status = _n0.b;
+		var row = author$project$Grid$extractMaybe(
+			A2(elm$core$Array$get, y - 1, grid));
+		var _n1 = author$project$Grid$extractMaybe(
+			A2(elm$core$Array$get, x - 1, row));
+		var loc = _n1.a;
+		var mineInfo = _n1.b;
+		var covering = _n1.c;
+		var _n2 = _Utils_Tuple2(mineInfo, covering);
+		if ((_n2.a.$ === 'NoMine') && (_n2.b.$ === 'Uncovered')) {
+			var num = _n2.a.a;
+			var _n3 = _n2.b;
+			return A4(
+				author$project$Grid$neighborUncover,
+				x,
+				y,
+				num,
+				_Utils_Tuple2(grid, status));
+		} else {
+			return A3(
+				author$project$Grid$uncoverGrid,
+				x,
+				y,
+				_Utils_Tuple2(grid, status));
+		}
+	});
 var author$project$Grid$Flagged = {$: 'Flagged'};
 var author$project$Grid$flagInGrid = F3(
 	function (x, y, grid) {
@@ -4933,27 +5428,31 @@ var author$project$Grid$flagInGrid = F3(
 		var covering = _n0.c;
 		switch (covering.$) {
 			case 'Uncovered':
-				return grid;
+				return _Utils_Tuple2(grid, 0);
 			case 'Flagged':
-				return A3(
-					elm$core$Array$set,
-					y - 1,
+				return _Utils_Tuple2(
 					A3(
 						elm$core$Array$set,
-						x - 1,
-						_Utils_Tuple3(loc, mineInfo, author$project$Grid$Covered),
-						row),
-					grid);
+						y - 1,
+						A3(
+							elm$core$Array$set,
+							x - 1,
+							_Utils_Tuple3(loc, mineInfo, author$project$Grid$Covered),
+							row),
+						grid),
+					-1);
 			default:
-				return A3(
-					elm$core$Array$set,
-					y - 1,
+				return _Utils_Tuple2(
 					A3(
 						elm$core$Array$set,
-						x - 1,
-						_Utils_Tuple3(loc, mineInfo, author$project$Grid$Flagged),
-						row),
-					grid);
+						y - 1,
+						A3(
+							elm$core$Array$set,
+							x - 1,
+							_Utils_Tuple3(loc, mineInfo, author$project$Grid$Flagged),
+							row),
+						grid),
+					1);
 		}
 	});
 var elm$core$List$drop = F2(
@@ -5116,126 +5615,16 @@ var author$project$Grid$get = F2(
 			return _Debug_todo(
 				'Grid',
 				{
-					start: {line: 256, column: 14},
-					end: {line: 256, column: 24}
+					start: {line: 362, column: 14},
+					end: {line: 362, column: 24}
 				})('get: bad case');
 		}
 	});
-var author$project$Grid$Lost = {$: 'Lost'};
-var author$project$Grid$Uncovered = {$: 'Uncovered'};
-var author$project$Grid$uncoverAllHelper = function (square) {
-	if ((square.b.$ === 'NoMine') && (square.c.$ === 'Covered')) {
-		var loc = square.a;
-		var num = square.b.a;
-		var _n1 = square.c;
-		return _Utils_Tuple3(
-			loc,
-			author$project$Grid$NoMine(num),
-			author$project$Grid$Uncovered);
-	} else {
-		return square;
-	}
-};
-var author$project$Grid$uncoverAllGrid = function (grid) {
-	return A2(
-		elm$core$Array$map,
-		function (row) {
-			return A2(elm$core$Array$map, author$project$Grid$uncoverAllHelper, row);
-		},
-		grid);
-};
-var elm$core$Basics$neq = _Utils_notEqual;
-var author$project$Grid$uncoverGrid = F3(
-	function (x, y, _n0) {
-		var grid = _n0.a;
-		var status = _n0.b;
-		var _n1 = A2(elm$core$Array$get, y - 1, grid);
-		if (_n1.$ === 'Nothing') {
-			return _Utils_Tuple2(grid, status);
-		} else {
-			var row = _n1.a;
-			var _n2 = A2(elm$core$Array$get, x - 1, row);
-			if (_n2.$ === 'Nothing') {
-				return _Utils_Tuple2(grid, status);
-			} else {
-				switch (_n2.a.c.$) {
-					case 'Uncovered':
-						var _n3 = _n2.a;
-						var _n4 = _n3.c;
-						return _Utils_Tuple2(grid, status);
-					case 'Flagged':
-						var _n5 = _n2.a;
-						var _n6 = _n5.c;
-						return _Utils_Tuple2(grid, status);
-					default:
-						if (_n2.a.b.$ === 'NoMine') {
-							var _n7 = _n2.a;
-							var loc = _n7.a;
-							var number = _n7.b.a;
-							var attr = _n7.c;
-							var newGrid = A3(
-								elm$core$Array$set,
-								y - 1,
-								A3(
-									elm$core$Array$set,
-									x - 1,
-									_Utils_Tuple3(
-										loc,
-										author$project$Grid$NoMine(number),
-										author$project$Grid$Uncovered),
-									row),
-								grid);
-							return number ? _Utils_Tuple2(newGrid, status) : A3(
-								author$project$Grid$uncoverGrid,
-								x + 1,
-								y + 1,
-								A3(
-									author$project$Grid$uncoverGrid,
-									x,
-									y + 1,
-									A3(
-										author$project$Grid$uncoverGrid,
-										x - 1,
-										y + 1,
-										A3(
-											author$project$Grid$uncoverGrid,
-											x + 1,
-											y,
-											A3(
-												author$project$Grid$uncoverGrid,
-												x - 1,
-												y,
-												A3(
-													author$project$Grid$uncoverGrid,
-													x + 1,
-													y - 1,
-													A3(
-														author$project$Grid$uncoverGrid,
-														x,
-														y - 1,
-														A3(
-															author$project$Grid$uncoverGrid,
-															x - 1,
-															y - 1,
-															_Utils_Tuple2(newGrid, status)))))))));
-						} else {
-							var _n8 = _n2.a;
-							var loc = _n8.a;
-							var newGrid = A3(
-								elm$core$Array$set,
-								y - 1,
-								A3(
-									elm$core$Array$set,
-									x - 1,
-									_Utils_Tuple3(loc, author$project$Grid$Mine, author$project$Grid$Uncovered),
-									row),
-								grid);
-							var wholeGrid = author$project$Grid$uncoverAllGrid(newGrid);
-							return _Utils_Tuple2(wholeGrid, author$project$Grid$Lost);
-						}
-				}
-			}
-		}
+var author$project$Grid$locToInt = F2(
+	function (_n0, size) {
+		var row = _n0.a;
+		var col = _n0.b;
+		return ((row * size) + col) + 1;
 	});
 var elm$core$List$foldrHelper = F4(
 	function (fn, acc, ctr, ls) {
@@ -5303,226 +5692,6 @@ var elm$core$List$filter = F2(
 			_List_Nil,
 			list);
 	});
-var elm$core$List$length = function (xs) {
-	return A3(
-		elm$core$List$foldl,
-		F2(
-			function (_n0, i) {
-				return i + 1;
-			}),
-		0,
-		xs);
-};
-var elm$core$Basics$True = {$: 'True'};
-var elm$core$Result$isOk = function (result) {
-	if (result.$ === 'Ok') {
-		return true;
-	} else {
-		return false;
-	}
-};
-var elm$core$Result$Err = function (a) {
-	return {$: 'Err', a: a};
-};
-var elm$core$Result$Ok = function (a) {
-	return {$: 'Ok', a: a};
-};
-var elm$json$Json$Decode$Failure = F2(
-	function (a, b) {
-		return {$: 'Failure', a: a, b: b};
-	});
-var elm$json$Json$Decode$Field = F2(
-	function (a, b) {
-		return {$: 'Field', a: a, b: b};
-	});
-var elm$json$Json$Decode$Index = F2(
-	function (a, b) {
-		return {$: 'Index', a: a, b: b};
-	});
-var elm$json$Json$Decode$OneOf = function (a) {
-	return {$: 'OneOf', a: a};
-};
-var elm$core$Basics$and = _Basics_and;
-var elm$core$Basics$append = _Utils_append;
-var elm$core$Char$toCode = _Char_toCode;
-var elm$core$Char$isLower = function (_char) {
-	var code = elm$core$Char$toCode(_char);
-	return (97 <= code) && (code <= 122);
-};
-var elm$core$Char$isUpper = function (_char) {
-	var code = elm$core$Char$toCode(_char);
-	return (code <= 90) && (65 <= code);
-};
-var elm$core$Char$isAlpha = function (_char) {
-	return elm$core$Char$isLower(_char) || elm$core$Char$isUpper(_char);
-};
-var elm$core$Char$isDigit = function (_char) {
-	var code = elm$core$Char$toCode(_char);
-	return (code <= 57) && (48 <= code);
-};
-var elm$core$Char$isAlphaNum = function (_char) {
-	return elm$core$Char$isLower(_char) || (elm$core$Char$isUpper(_char) || elm$core$Char$isDigit(_char));
-};
-var elm$core$List$map2 = _List_map2;
-var elm$core$List$rangeHelp = F3(
-	function (lo, hi, list) {
-		rangeHelp:
-		while (true) {
-			if (_Utils_cmp(lo, hi) < 1) {
-				var $temp$lo = lo,
-					$temp$hi = hi - 1,
-					$temp$list = A2(elm$core$List$cons, hi, list);
-				lo = $temp$lo;
-				hi = $temp$hi;
-				list = $temp$list;
-				continue rangeHelp;
-			} else {
-				return list;
-			}
-		}
-	});
-var elm$core$List$range = F2(
-	function (lo, hi) {
-		return A3(elm$core$List$rangeHelp, lo, hi, _List_Nil);
-	});
-var elm$core$List$indexedMap = F2(
-	function (f, xs) {
-		return A3(
-			elm$core$List$map2,
-			f,
-			A2(
-				elm$core$List$range,
-				0,
-				elm$core$List$length(xs) - 1),
-			xs);
-	});
-var elm$core$String$all = _String_all;
-var elm$core$String$fromInt = _String_fromNumber;
-var elm$core$String$join = F2(
-	function (sep, chunks) {
-		return A2(
-			_String_join,
-			sep,
-			_List_toArray(chunks));
-	});
-var elm$core$String$uncons = _String_uncons;
-var elm$core$String$split = F2(
-	function (sep, string) {
-		return _List_fromArray(
-			A2(_String_split, sep, string));
-	});
-var elm$json$Json$Decode$indent = function (str) {
-	return A2(
-		elm$core$String$join,
-		'\n    ',
-		A2(elm$core$String$split, '\n', str));
-};
-var elm$json$Json$Encode$encode = _Json_encode;
-var elm$json$Json$Decode$errorOneOf = F2(
-	function (i, error) {
-		return '\n\n(' + (elm$core$String$fromInt(i + 1) + (') ' + elm$json$Json$Decode$indent(
-			elm$json$Json$Decode$errorToString(error))));
-	});
-var elm$json$Json$Decode$errorToString = function (error) {
-	return A2(elm$json$Json$Decode$errorToStringHelp, error, _List_Nil);
-};
-var elm$json$Json$Decode$errorToStringHelp = F2(
-	function (error, context) {
-		errorToStringHelp:
-		while (true) {
-			switch (error.$) {
-				case 'Field':
-					var f = error.a;
-					var err = error.b;
-					var isSimple = function () {
-						var _n1 = elm$core$String$uncons(f);
-						if (_n1.$ === 'Nothing') {
-							return false;
-						} else {
-							var _n2 = _n1.a;
-							var _char = _n2.a;
-							var rest = _n2.b;
-							return elm$core$Char$isAlpha(_char) && A2(elm$core$String$all, elm$core$Char$isAlphaNum, rest);
-						}
-					}();
-					var fieldName = isSimple ? ('.' + f) : ('[\'' + (f + '\']'));
-					var $temp$error = err,
-						$temp$context = A2(elm$core$List$cons, fieldName, context);
-					error = $temp$error;
-					context = $temp$context;
-					continue errorToStringHelp;
-				case 'Index':
-					var i = error.a;
-					var err = error.b;
-					var indexName = '[' + (elm$core$String$fromInt(i) + ']');
-					var $temp$error = err,
-						$temp$context = A2(elm$core$List$cons, indexName, context);
-					error = $temp$error;
-					context = $temp$context;
-					continue errorToStringHelp;
-				case 'OneOf':
-					var errors = error.a;
-					if (!errors.b) {
-						return 'Ran into a Json.Decode.oneOf with no possibilities' + function () {
-							if (!context.b) {
-								return '!';
-							} else {
-								return ' at json' + A2(
-									elm$core$String$join,
-									'',
-									elm$core$List$reverse(context));
-							}
-						}();
-					} else {
-						if (!errors.b.b) {
-							var err = errors.a;
-							var $temp$error = err,
-								$temp$context = context;
-							error = $temp$error;
-							context = $temp$context;
-							continue errorToStringHelp;
-						} else {
-							var starter = function () {
-								if (!context.b) {
-									return 'Json.Decode.oneOf';
-								} else {
-									return 'The Json.Decode.oneOf at json' + A2(
-										elm$core$String$join,
-										'',
-										elm$core$List$reverse(context));
-								}
-							}();
-							var introduction = starter + (' failed in the following ' + (elm$core$String$fromInt(
-								elm$core$List$length(errors)) + ' ways:'));
-							return A2(
-								elm$core$String$join,
-								'\n\n',
-								A2(
-									elm$core$List$cons,
-									introduction,
-									A2(elm$core$List$indexedMap, elm$json$Json$Decode$errorOneOf, errors)));
-						}
-					}
-				default:
-					var msg = error.a;
-					var json = error.b;
-					var introduction = function () {
-						if (!context.b) {
-							return 'Problem with the given value:\n\n';
-						} else {
-							return 'Problem with the value at json' + (A2(
-								elm$core$String$join,
-								'',
-								elm$core$List$reverse(context)) + ':\n\n    ');
-						}
-					}();
-					return introduction + (elm$json$Json$Decode$indent(
-						A2(elm$json$Json$Encode$encode, 4, json)) + ('\n\n' + msg));
-			}
-		}
-	});
-var elm$core$Platform$Cmd$batch = _Platform_batch;
-var elm$core$Platform$Cmd$none = elm$core$Platform$Cmd$batch(_List_Nil);
 var elm$core$Basics$identity = function (x) {
 	return x;
 };
@@ -5680,108 +5849,139 @@ var author$project$Grid$update = F2(
 			switch (msg.$) {
 				case 'NewMinePos':
 					var num = msg.a;
-					return _Utils_Tuple2(
-						model,
-						A2(
-							elm$random$Random$generate,
-							function (n) {
-								return A2(author$project$Grid$NewMine, n, num);
-							},
+					var toRemove = msg.b;
+					var loc = msg.c;
+					if (toRemove.$ === 'Nothing') {
+						return _Utils_Tuple2(
+							model,
 							A2(
-								elm$random$Random$int,
-								0,
-								elm$core$List$length(model.minePossibilities) - 1)));
+								elm$random$Random$generate,
+								function (n) {
+									return A3(author$project$Grid$NewMine, n, num, loc);
+								},
+								A2(
+									elm$random$Random$int,
+									0,
+									elm$core$List$length(model.minePossibilities) - 1)));
+					} else {
+						var clicked = toRemove.a;
+						var newMinePossibilities = A2(
+							elm$core$List$filter,
+							function (n) {
+								return !_Utils_eq(n, clicked);
+							},
+							model.minePossibilities);
+						return _Utils_Tuple2(
+							{grid: model.grid, minePossibilities: newMinePossibilities, numFlags: model.numFlags, numMines: model.numMines, size: model.size, status: model.status},
+							A2(
+								elm$random$Random$generate,
+								function (n) {
+									return A3(author$project$Grid$NewMine, n, num, loc);
+								},
+								A2(
+									elm$random$Random$int,
+									0,
+									elm$core$List$length(newMinePossibilities) - 1)));
+					}
 				case 'NewMine':
 					var index = msg.a;
 					var num = msg.b;
+					var loc = msg.c;
 					if (!num) {
-						var $temp$msg = author$project$Grid$PlaceNumbers,
+						var $temp$msg = author$project$Grid$PlaceNumbers(loc),
 							$temp$model = model;
 						msg = $temp$msg;
 						model = $temp$model;
 						continue update;
 					} else {
 						var pos = A2(author$project$Grid$get, index, model.minePossibilities);
-						var $temp$msg = author$project$Grid$NewMinePos(num - 1),
+						var $temp$msg = A3(author$project$Grid$NewMinePos, num - 1, elm$core$Maybe$Nothing, loc),
 							$temp$model = {
-							grid: A2(author$project$Grid$addMine, pos + 1, model.grid),
+							grid: A3(author$project$Grid$addMine, pos + 1, model.grid, model.size),
 							minePossibilities: A2(
 								elm$core$List$filter,
 								function (n) {
 									return !_Utils_eq(n, pos);
 								},
 								model.minePossibilities),
-							status: author$project$Grid$Neither
+							numFlags: model.numFlags,
+							numMines: model.numMines,
+							size: model.size,
+							status: author$project$Grid$NotStarted
 						};
 						msg = $temp$msg;
 						model = $temp$model;
 						continue update;
 					}
 				case 'PlaceNumbers':
+					var loc = msg.a;
 					var newGrid = author$project$Grid$calculateNumbers(model.grid);
-					return _Utils_Tuple2(
-						{grid: newGrid, minePossibilities: _List_Nil, status: author$project$Grid$Neither},
-						elm$core$Platform$Cmd$none);
+					var $temp$msg = author$project$Grid$Uncover(loc),
+						$temp$model = {grid: newGrid, minePossibilities: _List_Nil, numFlags: model.numFlags, numMines: model.numMines, size: model.size, status: author$project$Grid$Playing};
+					msg = $temp$msg;
+					model = $temp$model;
+					continue update;
 				case 'Uncover':
-					var _n2 = msg.a;
-					var row = _n2.a;
-					var col = _n2.b;
-					if (_Utils_eq(model.status, author$project$Grid$Neither)) {
-						var _n3 = A3(
-							author$project$Grid$uncoverGrid,
-							col,
-							row,
-							_Utils_Tuple2(model.grid, model.status));
-						var newGrid = _n3.a;
-						var newStatus = _n3.b;
+					var _n3 = msg.a;
+					var row = _n3.a;
+					var col = _n3.b;
+					var _n4 = model.status;
+					switch (_n4.$) {
+						case 'Playing':
+							var _n5 = A3(
+								author$project$Grid$clicking,
+								col,
+								row,
+								_Utils_Tuple2(model.grid, model.status));
+							var newGrid = _n5.a;
+							var newStatus = _n5.b;
+							return _Utils_Tuple2(
+								{grid: newGrid, minePossibilities: _List_Nil, numFlags: model.numFlags, numMines: model.numMines, size: model.size, status: newStatus},
+								elm$core$Platform$Cmd$none);
+						case 'NotStarted':
+							var $temp$msg = A3(
+								author$project$Grid$NewMinePos,
+								model.numMines,
+								elm$core$Maybe$Just(
+									A2(
+										author$project$Grid$locToInt,
+										_Utils_Tuple2(row - 1, col - 1),
+										model.size) - 1),
+								_Utils_Tuple2(row, col)),
+								$temp$model = model;
+							msg = $temp$msg;
+							model = $temp$model;
+							continue update;
+						default:
+							return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
+					}
+				case 'Flag':
+					var _n6 = msg.a;
+					var row = _n6.a;
+					var col = _n6.b;
+					if (_Utils_eq(model.status, author$project$Grid$Playing)) {
+						var _n7 = A3(author$project$Grid$flagInGrid, col, row, model.grid);
+						var newGrid = _n7.a;
+						var flagsAdded = _n7.b;
 						return _Utils_Tuple2(
-							{grid: newGrid, minePossibilities: _List_Nil, status: newStatus},
+							{grid: newGrid, minePossibilities: _List_Nil, numFlags: model.numFlags + flagsAdded, numMines: model.numMines, size: model.size, status: author$project$Grid$Playing},
 							elm$core$Platform$Cmd$none);
 					} else {
 						return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
 					}
 				default:
-					var _n4 = msg.a;
-					var row = _n4.a;
-					var col = _n4.b;
-					if (_Utils_eq(model.status, author$project$Grid$Neither)) {
-						var newGrid = A3(author$project$Grid$flagInGrid, col, row, model.grid);
-						return _Utils_Tuple2(
-							{grid: newGrid, minePossibilities: _List_Nil, status: author$project$Grid$Neither},
-							elm$core$Platform$Cmd$none);
-					} else {
-						return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
-					}
+					var size = msg.a;
+					var numMines = msg.b;
+					return A2(author$project$Grid$initDifficulty, size, numMines);
 			}
 		}
 	});
-var author$project$Grid$init = function (_n0) {
-	return A2(
-		author$project$Grid$update,
-		author$project$Grid$NewMinePos(author$project$Grid$numMines),
-		{
-			grid: author$project$Grid$generateBlankGrid(author$project$Grid$initSize),
-			minePossibilities: A2(
-				elm$core$List$range,
-				0,
-				A2(elm$core$Basics$pow, author$project$Grid$initSize, 2) - 1),
-			status: author$project$Grid$Neither
-		});
-};
-var elm$core$Platform$Sub$batch = _Platform_batch;
-var elm$core$Platform$Sub$none = elm$core$Platform$Sub$batch(_List_Nil);
-var author$project$Grid$subscriptions = function (model) {
-	return elm$core$Platform$Sub$none;
-};
-var author$project$Grid$Flag = function (a) {
-	return {$: 'Flag', a: a};
-};
-var author$project$Grid$Uncover = function (a) {
-	return {$: 'Uncover', a: a};
-};
-var elm$virtual_dom$VirtualDom$Custom = function (a) {
-	return {$: 'Custom', a: a};
-};
+var author$project$Grid$SetDifficulty = F2(
+	function (a, b) {
+		return {$: 'SetDifficulty', a: a, b: b};
+	});
+var author$project$Grid$pixelSize = 500;
+var elm$core$Debug$toString = _Debug_toString;
 var elm$json$Json$Decode$map = _Json_map1;
 var elm$json$Json$Decode$map2 = _Json_map2;
 var elm$json$Json$Decode$succeed = _Json_succeed;
@@ -5797,7 +5997,127 @@ var elm$virtual_dom$VirtualDom$toHandlerInt = function (handler) {
 			return 3;
 	}
 };
+var elm$html$Html$button = _VirtualDom_node('button');
+var elm$html$Html$div = _VirtualDom_node('div');
+var elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
+var elm$html$Html$text = elm$virtual_dom$VirtualDom$text;
+var elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
+var elm$html$Html$Attributes$style = elm$virtual_dom$VirtualDom$style;
+var elm$virtual_dom$VirtualDom$Normal = function (a) {
+	return {$: 'Normal', a: a};
+};
 var elm$virtual_dom$VirtualDom$on = _VirtualDom_on;
+var elm$html$Html$Events$on = F2(
+	function (event, decoder) {
+		return A2(
+			elm$virtual_dom$VirtualDom$on,
+			event,
+			elm$virtual_dom$VirtualDom$Normal(decoder));
+	});
+var elm$html$Html$Events$onClick = function (msg) {
+	return A2(
+		elm$html$Html$Events$on,
+		'click',
+		elm$json$Json$Decode$succeed(msg));
+};
+var author$project$Grid$buttons = function (numMines) {
+	var selected = function () {
+		switch (numMines) {
+			case 10:
+				return 1;
+			case 40:
+				return 2;
+			case 99:
+				return 3;
+			default:
+				return _Debug_todo(
+					'Grid',
+					{
+						start: {line: 207, column: 22},
+						end: {line: 207, column: 32}
+					})('buttons: bad case');
+		}
+	}();
+	var buttonStyles = _List_fromArray(
+		[
+			A2(elm$html$Html$Attributes$style, 'width', '32%'),
+			A2(elm$html$Html$Attributes$style, 'margin-right', '6px')
+		]);
+	return A2(
+		elm$html$Html$div,
+		_List_fromArray(
+			[
+				A2(
+				elm$html$Html$Attributes$style,
+				'width',
+				elm$core$Debug$toString(author$project$Grid$pixelSize) + 'px'),
+				A2(elm$html$Html$Attributes$style, 'margin-bottom', '5px'),
+				A2(elm$html$Html$Attributes$style, 'margin-left', '5px')
+			]),
+		_List_fromArray(
+			[
+				A2(
+				elm$html$Html$button,
+				_Utils_ap(
+					buttonStyles,
+					_Utils_ap(
+						_List_fromArray(
+							[
+								elm$html$Html$Events$onClick(
+								A2(author$project$Grid$SetDifficulty, 8, 10))
+							]),
+						(selected === 1) ? _List_fromArray(
+							[
+								A2(elm$html$Html$Attributes$style, 'background-color', 'green')
+							]) : _List_Nil)),
+				_List_fromArray(
+					[
+						elm$html$Html$text('Easy (8x8, 10 Mines)')
+					])),
+				A2(
+				elm$html$Html$button,
+				_Utils_ap(
+					buttonStyles,
+					_Utils_ap(
+						_List_fromArray(
+							[
+								elm$html$Html$Events$onClick(
+								A2(author$project$Grid$SetDifficulty, 16, 40))
+							]),
+						(selected === 2) ? _List_fromArray(
+							[
+								A2(elm$html$Html$Attributes$style, 'background-color', 'green')
+							]) : _List_Nil)),
+				_List_fromArray(
+					[
+						elm$html$Html$text('Medium (16x16, 24 Mines)')
+					])),
+				A2(
+				elm$html$Html$button,
+				_Utils_ap(
+					buttonStyles,
+					_Utils_ap(
+						_List_fromArray(
+							[
+								elm$html$Html$Events$onClick(
+								A2(author$project$Grid$SetDifficulty, 24, 99))
+							]),
+						(selected === 3) ? _List_fromArray(
+							[
+								A2(elm$html$Html$Attributes$style, 'background-color', 'green')
+							]) : _List_Nil)),
+				_List_fromArray(
+					[
+						elm$html$Html$text('Hard (24x24, 99 Mines)')
+					]))
+			]));
+};
+var author$project$Grid$Flag = function (a) {
+	return {$: 'Flag', a: a};
+};
+var elm$virtual_dom$VirtualDom$Custom = function (a) {
+	return {$: 'Custom', a: a};
+};
 var elm$html$Html$Events$custom = F2(
 	function (event, decoder) {
 		return A2(
@@ -5811,28 +6131,6 @@ var author$project$Grid$onRightClick = function (msg) {
 		'contextmenu',
 		elm$json$Json$Decode$succeed(
 			{message: msg, preventDefault: true, stopPropagation: true}));
-};
-var elm$core$Debug$toString = _Debug_toString;
-var elm$html$Html$div = _VirtualDom_node('div');
-var elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
-var elm$html$Html$text = elm$virtual_dom$VirtualDom$text;
-var elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
-var elm$html$Html$Attributes$style = elm$virtual_dom$VirtualDom$style;
-var elm$virtual_dom$VirtualDom$Normal = function (a) {
-	return {$: 'Normal', a: a};
-};
-var elm$html$Html$Events$on = F2(
-	function (event, decoder) {
-		return A2(
-			elm$virtual_dom$VirtualDom$on,
-			event,
-			elm$virtual_dom$VirtualDom$Normal(decoder));
-	});
-var elm$html$Html$Events$onClick = function (msg) {
-	return A2(
-		elm$html$Html$Events$on,
-		'click',
-		elm$json$Json$Decode$succeed(msg));
 };
 var author$project$Grid$squareToView = F2(
 	function (size, _n0) {
@@ -5887,6 +6185,12 @@ var author$project$Grid$squareToView = F2(
 						_List_fromArray(
 							[
 								A2(elm$html$Html$Attributes$style, 'background-color', 'green'),
+								A2(elm$html$Html$Attributes$style, 'background-image', 'url(images/flag.png'),
+								A2(elm$html$Html$Attributes$style, 'background-repeat', 'no-repeat'),
+								A2(
+								elm$html$Html$Attributes$style,
+								'background-size',
+								elm$core$Debug$toString(size) + 'px'),
 								author$project$Grid$onRightClick(
 								author$project$Grid$Flag(
 									_Utils_Tuple2(row, col)))
@@ -5926,7 +6230,10 @@ var author$project$Grid$squareToView = F2(
 											[
 												A2(elm$html$Html$Attributes$style, 'left', '30%'),
 												A2(elm$html$Html$Attributes$style, 'top', '10%'),
-												A2(elm$html$Html$Attributes$style, 'position', 'absolute')
+												A2(elm$html$Html$Attributes$style, 'position', 'absolute'),
+												elm$html$Html$Events$onClick(
+												author$project$Grid$Uncover(
+													_Utils_Tuple2(row, col)))
 											]),
 										_List_fromArray(
 											[
@@ -5994,8 +6301,74 @@ var author$project$Grid$gridToView = F2(
 					author$project$Grid$rowToView(size),
 					grid)));
 	});
+var elm$html$Html$br = _VirtualDom_node('br');
+var author$project$Grid$instructionText = function (size) {
+	return A2(
+		elm$html$Html$div,
+		_List_fromArray(
+			[
+				A2(
+				elm$html$Html$Attributes$style,
+				'width',
+				elm$core$Debug$toString(size) + 'px'),
+				A2(elm$html$Html$Attributes$style, 'text-align', 'center'),
+				A2(
+				elm$html$Html$Attributes$style,
+				'font-size',
+				elm$core$Debug$toString(size / 20) + 'px'),
+				A2(elm$html$Html$Attributes$style, 'margin-top', '5px')
+			]),
+		_List_fromArray(
+			[
+				elm$html$Html$text('Left-click to uncover a space'),
+				A2(elm$html$Html$br, _List_Nil, _List_Nil),
+				elm$html$Html$text('Right-click to flag a space')
+			]));
+};
+var author$project$Grid$statusText = F2(
+	function (model, size) {
+		return A2(
+			elm$html$Html$div,
+			_List_fromArray(
+				[
+					A2(
+					elm$html$Html$Attributes$style,
+					'width',
+					elm$core$Debug$toString(size) + 'px'),
+					A2(elm$html$Html$Attributes$style, 'position', 'absolute'),
+					A2(
+					elm$html$Html$Attributes$style,
+					'left',
+					elm$core$Debug$toString(size + 20) + 'px'),
+					A2(
+					elm$html$Html$Attributes$style,
+					'top',
+					elm$core$Debug$toString(size / 3) + 'px'),
+					A2(
+					elm$html$Html$Attributes$style,
+					'font-size',
+					elm$core$Debug$toString(size / 10) + 'px')
+				]),
+			_List_fromArray(
+				[
+					elm$html$Html$text(
+					'Mines Present: ' + elm$core$Debug$toString(model.numMines)),
+					A2(elm$html$Html$br, _List_Nil, _List_Nil),
+					elm$html$Html$text(
+					'Flags Placed: ' + elm$core$Debug$toString(model.numFlags))
+				]));
+	});
 var author$project$Grid$view = function (model) {
-	return A2(author$project$Grid$gridToView, model.grid, 500);
+	return A2(
+		elm$html$Html$div,
+		_List_Nil,
+		_List_fromArray(
+			[
+				A2(author$project$Grid$statusText, model, author$project$Grid$pixelSize),
+				author$project$Grid$buttons(model.numMines),
+				A2(author$project$Grid$gridToView, model.grid, author$project$Grid$pixelSize),
+				author$project$Grid$instructionText(author$project$Grid$pixelSize)
+			]));
 };
 var elm$browser$Browser$External = function (a) {
 	return {$: 'External', a: a};

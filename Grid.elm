@@ -141,8 +141,7 @@ update msg model =
             case model.status of
                 Playing ->
                     let
-                        -- TODO implement number clicking
-                        (newGrid, newStatus) = uncoverGrid col row (model.grid, model.status)
+                        (newGrid, newStatus) = clicking col row (model.grid, model.status)
                     in
                         ({grid = newGrid
                         , status = newStatus
@@ -312,7 +311,8 @@ squareToView size ((row,col), tile, attr) =
                                     [
                                     style "left" "30%", 
                                     style "top" "10%",
-                                    style "position" "absolute"
+                                    style "position" "absolute",
+                                    onClick (Uncover (row,col))
                                     ] 
                                     [text (Debug.toString i)]])
 
@@ -474,3 +474,54 @@ flagInGrid x y grid =
             Uncovered -> (grid, 0)
             Flagged -> (Array.set (y-1) (Array.set (x-1) (loc, mineInfo, Covered) row) grid, -1)
             Covered -> (Array.set (y-1) (Array.set (x-1) (loc, mineInfo, Flagged) row) grid, 1)
+
+
+-- Directs the left-click to the proper function
+clicking : Int -> Int -> (Grid, Status) -> (Grid, Status)
+clicking x y (grid, status) =
+    let
+        row = extractMaybe (Array.get (y-1) grid)
+        (loc, mineInfo, covering) = extractMaybe (Array.get (x-1) row)
+    in
+        case (mineInfo, covering) of
+            (NoMine num, Uncovered) -> neighborUncover x y num (grid, status) -- Uncover the neighbors (using flagging)
+            _ -> uncoverGrid x y (grid, status) -- Standard recursive uncovering
+
+-- Uncovers the unflagged neighbors of a valid uncovered square
+neighborUncover : Int -> Int -> Int -> (Grid, Status) -> (Grid, Status)
+neighborUncover x y numNeeded (grid, status) =
+    let
+        -- Are there the proper number of flags adjacent?
+        count = (flagCheck 0 [(x-1,y-1)
+                            ,(x,y-1)
+                            ,(x+1,y-1)
+                            ,(x-1,y)
+                            ,(x+1,y)
+                            ,(x-1,y+1)
+                            ,(x,y+1)
+                            ,(x+1,y+1)] grid)
+    in
+        if count == numNeeded then
+            uncoverGrid (x-1) (y-1) (grid, status)
+                |> uncoverGrid x (y-1) 
+                |> uncoverGrid (x+1) (y-1) 
+                |> uncoverGrid (x-1) y 
+                |> uncoverGrid (x+1) y 
+                |> uncoverGrid (x-1) (y+1) 
+                |> uncoverGrid x (y+1) 
+                |> uncoverGrid (x+1) (y+1)
+        else
+            (grid, status)
+
+-- Finds how many flags are present in the list (helper only ever given a list of neighbors)
+flagCheck : Int -> List Loc -> Grid -> Int
+flagCheck acc locs grid =
+    case locs of
+        [] -> acc
+        (x,y)::rest ->
+            case (Array.get (y-1) grid) of
+                Nothing -> flagCheck acc rest grid
+                Just row ->
+                    case (Array.get (x-1) row) of
+                        Just (_, _, Flagged) -> flagCheck (acc+1) rest grid
+                        _ -> flagCheck acc rest grid

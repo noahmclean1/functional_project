@@ -49,6 +49,7 @@ type alias Model =
     , minePossibilities : List Int
     , size : Int
     , numMines : Int
+    , numFlags : Int
     }
 
 ----------------------------------------------------------------------------------
@@ -74,11 +75,16 @@ main =
 -- Create the initial grid, with numMines mines at the specified size
 init : () -> ( Model, Cmd Msg )
 init () =
-        ({ grid = generateBlankGrid initSize
+    initDifficulty initSize initNumMines
+
+initDifficulty : Int -> Int -> ( Model, Cmd Msg )
+initDifficulty size numMines =
+        ({ grid = generateBlankGrid size
         , status = NotStarted
-        , minePossibilities = List.range 0 (initSize ^ 2 - 1)
-        , size = initSize
-        , numMines = initNumMines
+        , minePossibilities = List.range 0 (size ^ 2 - 1)
+        , size = size
+        , numMines = numMines
+        , numFlags = 0
         }, Cmd.none)
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -95,11 +101,12 @@ update msg model =
                     let
                         newMinePossibilities = List.filter (\n -> n /= clicked) (model.minePossibilities)
                     in
-                    ({grid = model.grid,
-                      status = model.status,
-                      minePossibilities = newMinePossibilities,
-                      size = model.size,
-                      numMines = model.numMines},
+                    ({grid = model.grid
+                    , status = model.status
+                    , minePossibilities = newMinePossibilities
+                    , size = model.size
+                    , numMines = model.numMines
+                    , numFlags = model.numFlags},
                       Random.generate 
                         (\n -> NewMine n num loc)
                         (Random.int 0 (List.length newMinePossibilities - 1)))
@@ -116,6 +123,7 @@ update msg model =
                             , minePossibilities = List.filter (\n -> n /= pos) model.minePossibilities
                             , size = model.size
                             , numMines = model.numMines
+                            , numFlags = model.numFlags
                             }
         PlaceNumbers loc -> 
             let
@@ -127,7 +135,8 @@ update msg model =
                 , status = Playing
                 , minePossibilities = []
                 , size = model.size
-                , numMines = model.numMines}
+                , numMines = model.numMines
+                , numFlags = model.numFlags}
         Uncover (row, col) ->
             case model.status of
                 Playing ->
@@ -139,7 +148,8 @@ update msg model =
                         , status = newStatus
                         , minePossibilities = []
                         , size = model.size
-                        , numMines = model.numMines}, Cmd.none)
+                        , numMines = model.numMines
+                        , numFlags = model.numFlags}, Cmd.none)
                 NotStarted ->
                     update (NewMinePos model.numMines (Just ((locToInt (row-1,col-1) model.size) - 1)) (row,col)) model
                 _ ->
@@ -148,13 +158,14 @@ update msg model =
             if model.status == Playing
             then
                 let
-                    newGrid = flagInGrid col row model.grid
+                    (newGrid, flagsAdded) = flagInGrid col row model.grid
                 in
                     ({grid= newGrid
                     , status = Playing
                     , minePossibilities = []
                     , size = model.size
-                    , numMines = model.numMines}, Cmd.none)                        
+                    , numMines = model.numMines
+                    , numFlags = model.numFlags + flagsAdded}, Cmd.none)                        
             else
                 (model, Cmd.none)
         SetDifficulty size numMines ->
@@ -168,7 +179,23 @@ subscriptions model =
 view : Model -> Html Msg
 view model =
     div []
-    [buttons model.numMines, gridToView model.grid pixelSize]
+    [ statusText model pixelSize
+    , buttons model.numMines
+    , gridToView model.grid pixelSize
+    , instructionText pixelSize]
+
+statusText : Model -> Int -> Html Msg
+statusText model size =
+    div
+    [ style "width" ((Debug.toString size) ++ "px")
+    , style "position" "absolute"
+    , style "left" ((Debug.toString (size + 20)) ++ "px")
+    , style "top" ((Debug.toString (toFloat size / 3)) ++ "px")
+    , style "font-size" ((Debug.toString (toFloat size / 10)) ++ "px")
+    ]
+    [ Html.text ("Mines Present: " ++ (Debug.toString model.numMines))
+    , br [] []
+    , Html.text ("Flags Placed: " ++ (Debug.toString model.numFlags))]
 
 buttons : Int -> Html Msg
 buttons numMines =
@@ -190,9 +217,21 @@ buttons numMines =
     , style "margin-bottom" "5px"
     , style "margin-left" "5px"]
 
-    [ button (buttonStyles ++ [onClick (SetDifficulty 8 10)]) [Html.text "Easy (8x8, 10 Mines)"]
-    , button (buttonStyles ++ [onClick (SetDifficulty 16 40)]) [Html.text "Medium (16x16, 24 Mines)"]
-    , button (buttonStyles ++ [onClick (SetDifficulty 24 99)]) [Html.text "Hard (24x24, 99 Mines)"]]
+    [ button (buttonStyles ++ [onClick (SetDifficulty 8 10)] ++ if selected == 1 then [style "background-color" "green"] else []) [Html.text "Easy (8x8, 10 Mines)"]
+    , button (buttonStyles ++ [onClick (SetDifficulty 16 40)] ++ if selected == 2 then [style "background-color" "green"] else []) [Html.text "Medium (16x16, 24 Mines)"]
+    , button (buttonStyles ++ [onClick (SetDifficulty 24 99)] ++ if selected == 3 then [style "background-color" "green"] else []) [Html.text "Hard (24x24, 99 Mines)"]]
+
+instructionText : Int -> Html Msg
+instructionText size =
+    div
+    [ style "width" ((Debug.toString size) ++ "px")
+    , style "text-align" "center"
+    , style "font-size" ((Debug.toString (toFloat size / 20)) ++ "px")
+    , style "margin-top" "5px"
+    ]
+    [ Html.text "Left-click to uncover a space"
+    , br [] []
+    , Html.text "Right-click to flag a space"]
 
 gridToView : Grid -> Int -> Html Msg
 gridToView grid size =
@@ -425,22 +464,13 @@ uncoverAllHelper square =
         _ -> square -- Don't uncover any mines or flags, ignored already uncovered squares
 
 -- Flag a square in the grid
-flagInGrid : Int -> Int -> Grid -> Grid
+flagInGrid : Int -> Int -> Grid -> (Grid, Int)
 flagInGrid x y grid =
     let
         row = extractMaybe (Array.get (y-1) grid)
         (loc, mineInfo, covering) = extractMaybe (Array.get (x-1) row)
     in
         case covering of
-            Uncovered -> grid
-            Flagged -> Array.set (y-1) (Array.set (x-1) (loc, mineInfo, Covered) row) grid
-            Covered -> Array.set (y-1) (Array.set (x-1) (loc, mineInfo, Flagged) row) grid
-
-initDifficulty : Int -> Int -> ( Model, Cmd Msg )
-initDifficulty size numMines =
-        ({ grid = generateBlankGrid size
-        , status = NotStarted
-        , minePossibilities = List.range 0 (size ^ 2 - 1)
-        , size = size
-        , numMines = numMines
-        }, Cmd.none)
+            Uncovered -> (grid, 0)
+            Flagged -> (Array.set (y-1) (Array.set (x-1) (loc, mineInfo, Covered) row) grid, -1)
+            Covered -> (Array.set (y-1) (Array.set (x-1) (loc, mineInfo, Flagged) row) grid, 1)

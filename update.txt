@@ -1,0 +1,9 @@
+We have implemented most of the functionality of Minesweeper, including
+all of the core mechanics, difficulty selection, restarting, automatic
+space clearing, flagging, reporting to the user the number of mines and
+flags on the board, and win/loss detection (and reporting of that to
+the user). Some additional features we are hoping to implement for the
+final version include a timer/score mechanism, dynamic scaling based
+on the window size, and UI/graphical changes.
+
+To run the project, use elm reactor and navigate to Grid.elm.

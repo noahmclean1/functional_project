@@ -510,15 +510,19 @@ checkWon model =
         getSquare (row,col) = Array.get (col) (extractMaybe (Array.get (row) model.grid))
         squaresList = Debug.log "squaresList: " (List.map (\m -> (extractMaybe (getSquare (intToLoc m model.size)))) spacesList)
     in
+        -- Only mines remaining
         (List.all (\n -> case n of
                             (_, Mine, _) -> True
                             (_, NoMine _, Uncovered) -> True
                             _ -> False) squaresList)
         ||
-        (List.all (\n -> case n of
+        -- All mines flagged
+        ((List.all (\n -> case n of
                             (_, Mine, Flagged) -> True
                             (_, Mine, _) -> False
                             _ -> True) squaresList)
+            &&
+            model.numMines == model.numFlags)
 
 -- Directs the left-click to the proper function
 clicking : Int -> Int -> (Grid, Status) -> (Grid, Status)

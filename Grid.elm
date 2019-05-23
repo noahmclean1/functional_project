@@ -142,9 +142,20 @@ update msg model =
                 Playing ->
                     let
                         (newGrid, newStatus) = clicking col row (model.grid, model.status)
+                        newStatus_ = 
+                            if 
+                                checkWon ({grid = newGrid
+                                        , status = newStatus
+                                        , minePossibilities = []
+                                        , size = model.size
+                                        , numMines = model.numMines
+                                        , numFlags = model.numFlags})
+                                && newStatus /= Lost 
+                            then Won 
+                            else newStatus
                     in
                         ({grid = newGrid
-                        , status = newStatus
+                        , status = newStatus_
                         , minePossibilities = []
                         , size = model.size
                         , numMines = model.numMines
@@ -158,9 +169,19 @@ update msg model =
             then
                 let
                     (newGrid, flagsAdded) = flagInGrid col row model.grid
+                    newStatus = 
+                            if 
+                                checkWon ({grid = newGrid
+                                        , status = model.status
+                                        , minePossibilities = []
+                                        , size = model.size
+                                        , numMines = model.numMines
+                                        , numFlags = model.numFlags})
+                            then Won 
+                            else Playing
                 in
                     ({grid= newGrid
-                    , status = Playing
+                    , status = newStatus
                     , minePossibilities = []
                     , size = model.size
                     , numMines = model.numMines
@@ -192,11 +213,15 @@ statusText model size =
     , style "top" ((Debug.toString (toFloat size / 3)) ++ "px")
     , style "font-size" ((Debug.toString (toFloat size / 10)) ++ "px")
     ]
-    [ Html.text ("Mines Present: " ++ (Debug.toString model.numMines))
+    ([ Html.text ("Mines Present: " ++ (Debug.toString model.numMines))
     , br [] []
-    , Html.text ("Flags Placed: " ++ (Debug.toString model.numFlags))
-    , br [] []
-    , Html.text ("Won: " ++ (Debug.toString (checkWon model)))]
+    , Html.text ("Flags Placed: " ++ (Debug.toString model.numFlags))]
+    ++ case model.status of
+        Lost -> [br [] []
+                , div [style "color" "red"] [Html.text "You lost! Select a difficulty to play again!"]]
+        Won -> [br [] []
+                , div [style "color" "green"] [Html.text "You won! Select a difficulty to play again!"]]
+        _ -> [])
 
 buttons : Int -> Html Msg
 buttons numMines =
@@ -482,12 +507,17 @@ checkWon model =
     let
         spacesList = (List.range 1 (model.size ^ 2))
         getSquare (row,col) = Array.get (col) (extractMaybe (Array.get (row) model.grid))
-        squaresList = (List.map (\m -> (extractMaybe (getSquare (intToLoc m model.size)))) spacesList)
+        squaresList = Debug.log "squaresList: " (List.map (\m -> (extractMaybe (getSquare (intToLoc m model.size)))) spacesList)
     in
-        List.all (\n -> case n of
+        (List.all (\n -> case n of
                             (_, Mine, _) -> True
                             (_, NoMine _, Uncovered) -> True
-                            _ -> False) squaresList
+                            _ -> False) squaresList)
+        ||
+        (List.all (\n -> case n of
+                            (_, Mine, Flagged) -> True
+                            (_, Mine, _) -> False
+                            _ -> True) squaresList)
 
 -- Directs the left-click to the proper function
 clicking : Int -> Int -> (Grid, Status) -> (Grid, Status)

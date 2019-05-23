@@ -176,7 +176,7 @@ update msg model =
                                         , minePossibilities = []
                                         , size = model.size
                                         , numMines = model.numMines
-                                        , numFlags = model.numFlags})
+                                        , numFlags = model.numFlags + flagsAdded})
                             then Won 
                             else Playing
                 in

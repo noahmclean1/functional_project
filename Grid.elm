@@ -2,6 +2,8 @@ module Grid exposing (..)
 
 import Array
 import Browser
+import Browser.Dom exposing (getViewport, Viewport)
+import Browser.Events exposing (..)
 import Debug
 import List
 import Json.Decode as Json
@@ -10,6 +12,7 @@ import Html.Events exposing (..)
 import Html.Attributes exposing (..)
 import Random
 import Time
+import Task
 
 ----------------------------------------------------------------------------------
 -- Type Declarations
@@ -42,6 +45,7 @@ type Msg
     | Uncover Loc -- Uncover the clicked square
     | Flag Loc -- Flag the clicked square as a mine
     | SetDifficulty Int Int -- Set the difficulty (aka set the size of the board and number of mines)
+    | Resize Int Int
 
 type alias Model =
     { grid : Grid
@@ -50,6 +54,7 @@ type alias Model =
     , size : Int
     , numMines : Int
     , numFlags : Int
+    , pixelSize : Int
     }
 
 ----------------------------------------------------------------------------------
@@ -85,6 +90,7 @@ initDifficulty size numMines =
         , size = size
         , numMines = numMines
         , numFlags = 0
+        , pixelSize = 500
         }, Cmd.none)
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -106,7 +112,8 @@ update msg model =
                     , minePossibilities = newMinePossibilities
                     , size = model.size
                     , numMines = model.numMines
-                    , numFlags = model.numFlags},
+                    , numFlags = model.numFlags
+                    , pixelSize = model.pixelSize},
                       Random.generate 
                         (\n -> NewMine n num loc)
                         (Random.int 0 (List.length newMinePossibilities - 1)))
@@ -124,6 +131,7 @@ update msg model =
                             , size = model.size
                             , numMines = model.numMines
                             , numFlags = model.numFlags
+                            , pixelSize = model.pixelSize
                             }
         PlaceNumbers loc -> 
             let
@@ -136,7 +144,8 @@ update msg model =
                 , minePossibilities = []
                 , size = model.size
                 , numMines = model.numMines
-                , numFlags = model.numFlags}
+                , numFlags = model.numFlags
+                , pixelSize = model.pixelSize}
         Uncover (row, col) ->
             case model.status of
                 Playing ->
@@ -149,7 +158,8 @@ update msg model =
                                         , minePossibilities = []
                                         , size = model.size
                                         , numMines = model.numMines
-                                        , numFlags = model.numFlags})
+                                        , numFlags = model.numFlags
+                                        , pixelSize = model.pixelSize})
                                 && newStatus /= Lost 
                             then Won 
                             else newStatus
@@ -159,7 +169,8 @@ update msg model =
                         , minePossibilities = []
                         , size = model.size
                         , numMines = model.numMines
-                        , numFlags = model.numFlags}, Cmd.none)
+                        , numFlags = model.numFlags
+                        , pixelSize = model.pixelSize}, Cmd.none)
                 NotStarted ->
                     update (NewMinePos model.numMines (Just ((locToInt (row-1,col-1) model.size) - 1)) (row,col)) model
                 _ ->
@@ -176,7 +187,8 @@ update msg model =
                                         , minePossibilities = []
                                         , size = model.size
                                         , numMines = model.numMines
-                                        , numFlags = model.numFlags + flagsAdded})
+                                        , numFlags = model.numFlags + flagsAdded
+                                        , pixelSize = model.pixelSize})
                             then Won 
                             else Playing
                 in
@@ -185,24 +197,34 @@ update msg model =
                     , minePossibilities = []
                     , size = model.size
                     , numMines = model.numMines
-                    , numFlags = model.numFlags + flagsAdded}, Cmd.none)                        
+                    , numFlags = model.numFlags + flagsAdded
+                    , pixelSize = model.pixelSize}, Cmd.none)                        
             else
                 (model, Cmd.none)
         SetDifficulty size numMines ->
             initDifficulty size numMines
+        Resize width height ->
+            ({grid = model.grid
+            , status = model.status
+            , minePossibilities = model.minePossibilities
+            , size = model.size
+            , numMines = model.numMines
+            , numFlags = model.numFlags
+            , pixelSize = Basics.max 100 (round (0.75 * toFloat (Basics.min width height)))}, 
+            Cmd.none)   
                     
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.none
+    onResize (\width height -> Resize width height)
 
 view : Model -> Html Msg
 view model =
     div []
-    [ statusText model pixelSize
+    [ statusText model model.pixelSize
     , buttons model.numMines
-    , gridToView model.grid pixelSize
-    , instructionText pixelSize]
+    , gridToView model.grid model.pixelSize
+    , instructionText model.pixelSize]
 
 statusText : Model -> Int -> Html Msg
 statusText model size =
@@ -243,9 +265,9 @@ buttons numMines =
     , style "margin-bottom" "5px"
     , style "margin-left" "5px"]
 
-    [ button (buttonStyles ++ [onClick (SetDifficulty 8 10)] ++ if selected == 1 then [style "background-color" "green"] else []) [Html.text "Easy (8x8, 10 Mines)"]
-    , button (buttonStyles ++ [onClick (SetDifficulty 16 40)] ++ if selected == 2 then [style "background-color" "green"] else []) [Html.text "Medium (16x16, 24 Mines)"]
-    , button (buttonStyles ++ [onClick (SetDifficulty 24 99)] ++ if selected == 3 then [style "background-color" "green"] else []) [Html.text "Hard (24x24, 99 Mines)"]]
+    [ button (buttonStyles ++ [Html.Events.onClick (SetDifficulty 8 10)] ++ if selected == 1 then [style "background-color" "green"] else []) [Html.text "Easy (8x8, 10 Mines)"]
+    , button (buttonStyles ++ [Html.Events.onClick (SetDifficulty 16 40)] ++ if selected == 2 then [style "background-color" "green"] else []) [Html.text "Medium (16x16, 24 Mines)"]
+    , button (buttonStyles ++ [Html.Events.onClick (SetDifficulty 24 99)] ++ if selected == 3 then [style "background-color" "green"] else []) [Html.text "Hard (24x24, 99 Mines)"]]
 
 instructionText : Int -> Html Msg
 instructionText size =
@@ -304,7 +326,7 @@ squareToView size ((row,col), tile, attr) =
                 (styles ++ 
                     [
                     style "background-color" "blue",
-                    onClick (Uncover (row,col)),
+                    Html.Events.onClick (Uncover (row,col)),
                     onRightClick (Flag (row,col))
                     ])
                 []
@@ -326,7 +348,7 @@ squareToView size ((row,col), tile, attr) =
                         (styles ++ [style "background-color" "red",
                                     style "background-image" "url(images/mine.png",
                                     style "background-repeat" "no-repeat",
-                                    onClick (Uncover (row,col)),
+                                    Html.Events.onClick (Uncover (row,col)),
                                     style "background-size" ((Debug.toString size) ++ "px")])
                         []
                     NoMine i ->
@@ -340,7 +362,7 @@ squareToView size ((row,col), tile, attr) =
                                     style "left" "30%", 
                                     style "top" "10%",
                                     style "position" "absolute",
-                                    onClick (Uncover (row,col))
+                                    Html.Events.onClick (Uncover (row,col))
                                     ] 
                                     [text (Debug.toString i)]])
 
@@ -508,7 +530,7 @@ checkWon model =
     let
         spacesList = (List.range 1 (model.size ^ 2))
         getSquare (row,col) = Array.get (col) (extractMaybe (Array.get (row) model.grid))
-        squaresList = Debug.log "squaresList: " (List.map (\m -> (extractMaybe (getSquare (intToLoc m model.size)))) spacesList)
+        squaresList = (List.map (\m -> (extractMaybe (getSquare (intToLoc m model.size)))) spacesList)
     in
         -- Only mines remaining
         (List.all (\n -> case n of

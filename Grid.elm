@@ -221,8 +221,8 @@ update msg model =
             , numMines = model.numMines
             , numFlags = model.numFlags
             , pixelSize = 
-                if toFloat width / toFloat height < (860/634)
-                then round (0.55 * toFloat width)
+                if toFloat width / toFloat height < (1000/634)
+                then round (0.475 * toFloat width)
                 else Basics.max 100 (round (0.75 * toFloat (Basics.min width height)))
             , timeTick = model.timeTick}, 
             Cmd.none)
@@ -255,7 +255,7 @@ subscriptions model =
 
 view : Model -> Html Msg
 view model =
-    div []
+    div [style "font-family" "Verdana"]
     [ statusText model model.pixelSize
     , buttons model.numMines
     , gridToView model.grid model.pixelSize
@@ -396,8 +396,8 @@ squareToView size ((row,col), tile, attr) =
                             _ ->
                                 [div 
                                     [
-                                    style "left" "30%", 
-                                    style "top" "10%",
+                                    style "left" "25%", 
+                                    style "top" "5%",
                                     style "position" "absolute",
                                     Html.Events.onClick (Uncover (row,col))
                                     ] 

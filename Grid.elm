@@ -46,6 +46,7 @@ type Msg
     | Flag Loc -- Flag the clicked square as a mine
     | SetDifficulty Int Int -- Set the difficulty (aka set the size of the board and number of mines)
     | Resize Int Int
+    | Tick Int
 
 type alias Model =
     { grid : Grid
@@ -55,6 +56,7 @@ type alias Model =
     , numMines : Int
     , numFlags : Int
     , pixelSize : Int
+    , timeTick : Int
     }
 
 ----------------------------------------------------------------------------------
@@ -91,6 +93,7 @@ initDifficulty size numMines pSize =
         , numMines = numMines
         , numFlags = 0
         , pixelSize = pSize
+        , timeTick = 0
         }, Cmd.none)
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -113,7 +116,8 @@ update msg model =
                     , size = model.size
                     , numMines = model.numMines
                     , numFlags = model.numFlags
-                    , pixelSize = model.pixelSize},
+                    , pixelSize = model.pixelSize
+                    , timeTick = model.timeTick},
                       Random.generate 
                         (\n -> NewMine n num loc)
                         (Random.int 0 (List.length newMinePossibilities - 1)))
@@ -132,6 +136,7 @@ update msg model =
                             , numMines = model.numMines
                             , numFlags = model.numFlags
                             , pixelSize = model.pixelSize
+                            , timeTick = model.timeTick
                             }
         PlaceNumbers loc -> 
             let
@@ -145,7 +150,8 @@ update msg model =
                 , size = model.size
                 , numMines = model.numMines
                 , numFlags = model.numFlags
-                , pixelSize = model.pixelSize}
+                , pixelSize = model.pixelSize
+                , timeTick = model.timeTick}
         Uncover (row, col) ->
             case model.status of
                 Playing ->
@@ -159,7 +165,8 @@ update msg model =
                                         , size = model.size
                                         , numMines = model.numMines
                                         , numFlags = model.numFlags
-                                        , pixelSize = model.pixelSize})
+                                        , pixelSize = model.pixelSize
+                                        , timeTick = model.timeTick})
                                 && newStatus /= Lost 
                             then Won 
                             else newStatus
@@ -170,7 +177,8 @@ update msg model =
                         , size = model.size
                         , numMines = model.numMines
                         , numFlags = model.numFlags
-                        , pixelSize = model.pixelSize}, Cmd.none)
+                        , pixelSize = model.pixelSize
+                        , timeTick = model.timeTick}, Cmd.none)
                 NotStarted ->
                     update (NewMinePos model.numMines (Just ((locToInt (row-1,col-1) model.size) - 1)) (row,col)) model
                 _ ->
@@ -188,7 +196,8 @@ update msg model =
                                         , size = model.size
                                         , numMines = model.numMines
                                         , numFlags = model.numFlags + flagsAdded
-                                        , pixelSize = model.pixelSize})
+                                        , pixelSize = model.pixelSize
+                                        , timeTick = model.timeTick})
                             then Won 
                             else Playing
                 in
@@ -198,7 +207,8 @@ update msg model =
                     , size = model.size
                     , numMines = model.numMines
                     , numFlags = model.numFlags + flagsAdded
-                    , pixelSize = model.pixelSize}, Cmd.none)                        
+                    , pixelSize = model.pixelSize
+                    , timeTick = model.timeTick}, Cmd.none)                        
             else
                 (model, Cmd.none)
         SetDifficulty size numMines ->
@@ -213,13 +223,35 @@ update msg model =
             , pixelSize = 
                 if toFloat width / toFloat height < (860/634)
                 then round (0.55 * toFloat width)
-                else Basics.max 100 (round (0.75 * toFloat (Basics.min width height)))}, 
-            Cmd.none)   
+                else Basics.max 100 (round (0.75 * toFloat (Basics.min width height)))
+            , timeTick = model.timeTick}, 
+            Cmd.none)
+        Tick num ->
+            let
+                -- Don't start the clock unless the game has begun or isn't over
+                newNum =
+                    case model.status of
+                        Playing -> num+1
+                        NotStarted -> 0
+                        _ -> num
+            in
+                ({grid = model.grid
+                , status = model.status
+                , minePossibilities = model.minePossibilities
+                , size = model.size
+                , numMines = model.numMines
+                , numFlags = model.numFlags
+                , pixelSize = model.pixelSize
+                , timeTick = newNum}, Cmd.none)   
                     
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    onResize (\width height -> Resize width height)
+    Sub.batch 
+    [
+        onResize (\width height -> Resize width height)
+        , Time.every 1000 (\_ -> Tick model.timeTick)
+    ]
 
 view : Model -> Html Msg
 view model =
@@ -238,7 +270,9 @@ statusText model size =
     , style "top" ((Debug.toString (toFloat size / 3)) ++ "px")
     , style "font-size" ((Debug.toString (toFloat size / 10)) ++ "px")
     ]
-    ([ Html.text ("Mines Present: " ++ (Debug.toString model.numMines))
+    ([ Html.text ("Time Elapsed: " ++ (Debug.toString model.timeTick))
+    , br [] []
+    , Html.text ("Mines Present: " ++ (Debug.toString model.numMines))
     , br [] []
     , Html.text ("Flags Placed: " ++ (Debug.toString model.numFlags))]
     ++ case model.status of

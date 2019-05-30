@@ -80,17 +80,17 @@ main =
 -- Create the initial grid, with numMines mines at the specified size
 init : () -> ( Model, Cmd Msg )
 init () =
-    initDifficulty initSize initNumMines
+    initDifficulty initSize initNumMines pixelSize
 
-initDifficulty : Int -> Int -> ( Model, Cmd Msg )
-initDifficulty size numMines =
+initDifficulty : Int -> Int -> Int -> ( Model, Cmd Msg )
+initDifficulty size numMines pSize =
         ({ grid = generateBlankGrid size
         , status = NotStarted
         , minePossibilities = List.range 0 (size ^ 2 - 1)
         , size = size
         , numMines = numMines
         , numFlags = 0
-        , pixelSize = 500
+        , pixelSize = pSize
         }, Cmd.none)
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -202,7 +202,7 @@ update msg model =
             else
                 (model, Cmd.none)
         SetDifficulty size numMines ->
-            initDifficulty size numMines
+            initDifficulty size numMines model.pixelSize
         Resize width height ->
             ({grid = model.grid
             , status = model.status
@@ -210,7 +210,10 @@ update msg model =
             , size = model.size
             , numMines = model.numMines
             , numFlags = model.numFlags
-            , pixelSize = Basics.max 100 (round (0.75 * toFloat (Basics.min width height)))}, 
+            , pixelSize = 
+                if toFloat width / toFloat height < (860/634)
+                then round (0.55 * toFloat width)
+                else Basics.max 100 (round (0.75 * toFloat (Basics.min width height)))}, 
             Cmd.none)   
                     
 

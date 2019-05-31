@@ -1,0 +1,29 @@
+In our final project for Functional Programming, we created a version of the game
+Minesweeper entirely in Elm/HTML. We broke our progress down into several different stages.
+
+First, we assembled the grid. We created a blank grid of squares at the correct size
+for each given difficulty. Then we placed a difficulty-specific number of mines at randomized
+locations within the grid. Finally, we added the adjacency numbers to non-mined tiles.
+
+Next, we added the ability to uncover and flag tiles. Uncovering a mined tile changes the
+game's status to "Lost" which prevents additional uncovering. We also implemented a
+recursive uncovering function that, when clicking on a tile with 0 adjacent mines, continues
+uncovering neighboring tiles (as the standard minesweeper game does). The final uncovering function
+was a new number-clicking behavior. When the player clicks a number with an appropriate number
+of flags near it, all unflagged neighboring tiles will be revealed. This will cause a loss
+if non-mined tiles are flagged and mined tiles are unflagged.
+
+Our third and final step was to texture the board, allow for resizing, and implement a timer.
+We made covered tiles blue, uncovered mines red, and flags green to make them highly distinct.
+Resizing is performed when the window size is adjusted by the player to provide a better viewing
+experience. The timer is a simple way to pace yourself and possibly improve over time (in a measureable way)
+
+Through this project, we became far more familiar with Elm, MVC, and even the rules of minesweeper. 
+One of the most difficult pieces of the project was creating the original grid and guaranteeing that
+the first click could not be a mine. Elm's random functions are only available through sending Msgs through
+MVC, so our grid creation involved multiple back-to-back Msgs being created and passed. We used differing
+game states (kept in the model) to determine when to generate the grid and in tandem with clicking to guarantee
+the first click's "safety". Minesweeper was a fun and intuitive project to learn Elm through, and we had a great
+time brainstorming our data structures and types. We began with a few basic descriptive types and quickly
+expanded them to encompass all the relevant information needed. We would highly recommend minesweeper as an
+Elm project in the future!
